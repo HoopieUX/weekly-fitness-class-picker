@@ -36,7 +36,7 @@ def test_approve_twice_creates_events_once(env):
 
 
 def test_ok_after_autoadd_is_harmless(env):
-    env.run("sunday"); env.at("2026-10-12 08:00")
+    env.run("sunday"); env.run("delivered"); env.at("2026-10-12 08:00")
     assert env.run("autoadd") == messages.autoadded()
     env.run("approve")
     assert env.calendar.created == 3
@@ -280,7 +280,7 @@ def test_a_longer_class_put_into_a_booked_slot_does_not_run_into_the_next_event(
 
 
 def test_autoadd_at_11pm_on_sunday_adds_the_week_that_is_about_to_start(env):
-    env.run("sunday"); env.at("2026-10-11 23:00")
+    env.run("sunday"); env.run("delivered"); env.at("2026-10-11 23:00")
     assert env.run("autoadd") == messages.autoadded()
     assert env.calendar.created == 3 and {p.status for p in env.week()} == {"scheduled"}
 
@@ -291,7 +291,7 @@ def test_a_reply_before_11pm_means_autoadd_stays_quiet(env):
 
 
 def test_a_change_at_10_55pm_is_still_added_at_11pm(env):
-    env.run("sunday"); env.at("2026-10-11 22:55"); env.run("low-energy-today")
+    env.run("sunday"); env.run("delivered"); env.at("2026-10-11 22:55"); env.run("low-energy-today")
     env.at("2026-10-11 23:00")
     assert env.run("autoadd") == messages.autoadded()
     assert env.calendar.created == 3
@@ -304,7 +304,7 @@ def test_autoadd_with_nothing_picked_is_silent_so_check_ran_is_the_alarm(env):
 
 
 def test_autoadd_at_11pm_covers_a_fourth_day(env):
-    env.run("set-slot Thu 10:00 strength"); env.run("sunday"); env.at("2026-10-11 23:00")
+    env.run("set-slot Thu 10:00 strength"); env.run("sunday"); env.run("delivered"); env.at("2026-10-11 23:00")
     env.run("autoadd")
     assert env.calendar.created == 4
 
@@ -318,3 +318,28 @@ def test_a_class_that_cannot_fit_between_9_and_12_is_left_out_and_reported():
     out = env.run("repeat Long Favourite Flow --on Tue")
     assert "9:00" in out and "12:00" in out and "Long Favourite Flow" in out
     assert env.week()[1].class_id == before.class_id and env.week()[1].start == before.start
+
+
+def test_no_auto_add_if_the_preview_was_not_delivered(env):
+    env.run("sunday"); env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == messages.not_previewed()
+    assert env.calendar.created == 0 and {p.status for p in env.week()} == {"proposed"}
+
+
+def test_ok_still_works_when_the_preview_was_not_confirmed(env):
+    env.run("sunday"); env.at("2026-10-11 23:30"); env.run("autoadd"); env.run("approve")
+    assert env.calendar.created == 3
+
+
+def test_a_fresh_plan_has_to_be_delivered_again(env):
+    env.run("sunday"); env.run("delivered"); env.run("pick")
+    env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == messages.not_previewed() and env.calendar.created == 0
+    env.run("delivered")
+    assert env.run("autoadd") == messages.autoadded() and env.calendar.created == 3
+
+
+def test_delivered_is_silent_and_harmless_with_nothing_picked_or_run_twice(env):
+    assert env.run("delivered") == ""
+    env.run("sunday"); env.run("delivered")
+    assert env.run("delivered") == ""

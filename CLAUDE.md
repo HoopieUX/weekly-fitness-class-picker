@@ -1,7 +1,7 @@
 # Weekly fitness class picker: notes for Claude Code
 
 - Run tests with `.venv/bin/python -m pytest -q`. The system `python3` has no pytest.
-- Class times live in the Google Sheet settings, not in the code. The 09:30 in `weekly_picker/models.py` is only a
+- Class times live in the Google Sheet settings, not in the code. The 10:00 in `weekly_picker/models.py` is only a
   first-run default. To change a real time, use `move <day> <HH:MM> --permanent`.
 - The real class catalogue (`alo-scoring/`) is private and not in git. Tests that need it skip when it is absent.
 - Agents (Instinct and others) read this repo for the code: see `docs/for-agents.md` for the schedule and commands.

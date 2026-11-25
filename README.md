@@ -2,7 +2,7 @@
 
 ![tests](https://github.com/HoopieUX/weekly-fitness-class-picker/actions/workflows/tests.yml/badge.svg)
 
-Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, same time each day), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once; plain code does the rest.
+Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once; plain code does the rest.
 
 <!-- IMAGE: GIF of WhatsApp message to approval to calendar, or remove and use the stills below -->
 
@@ -40,7 +40,7 @@ flowchart TD
     R -->|skip| SK["Class removed from the week"] --> CAL
     R -->|fav| FV["Class saved as a favourite, picks lean towards it"] --> CAL
     R -->|"how I feel: 'low energy today', 'something longer', 'no physio'"| F["Agent turns it into a setting and re-picks the class to suit"] --> B
-    R -->|"no reply by 23:00"| M["Sunday 23:00: classes added automatically, with an undo option"]
+    R -->|"no reply by 23:00, and the preview was delivered"| M["Sunday 23:00: classes added automatically, with an undo option"]
     M --> CAL
     CAL --> K["Through the day: clash checker moves a class if a new event lands on it"]
     K --> FB["After a class: like, too hard, too easy"]
@@ -48,7 +48,7 @@ flowchart TD
     N --> A
 ```
 
-Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks never ran; anything I have not replied to goes into the calendar automatically at 23:00 on Sunday; clash checks every 30 minutes from 07:00 to 21:30. The days, times and goals are my settings (Monday to Thursday), and the run times live in the scheduler, not in this code.
+Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks never ran; anything I have not replied to goes into the calendar automatically at 23:00 on Sunday, but only if the preview was actually delivered; clash checks every 30 minutes from 07:00 to 21:30. Classes are only ever placed between 09:00 and 12:00, preferably starting at 10:00, otherwise at the nearest free 15-minute slot; if nothing fits, the class is left out and the message says so. The days and goals are my settings (Monday to Thursday), and the run times live in the scheduler, not in this code.
 
 ## Code map
 

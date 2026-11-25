@@ -213,6 +213,7 @@ def cmd_sunday(ctx: _Context, force: bool) -> str:
     planned = plan_week(week, data.classes_list, data.labels, data.settings, data.picks, busy, ranker,
                         today=now.date(), cycle=data.cycle, keep=keep, only=ahead, favourites=data.favourites)
     store.save_picks([replace(p, jev_used=state["jev"]) for p in planned if p.slot not in kept])
+    store.save_offers(_PREVIEW, week, [])  # a fresh plan has not been shown yet
     if data.settings.next_week:
         store.save_settings(replace(data.settings, next_week={}))
     return _render_week(data, week, store.load_picks(), state["jev"])
@@ -251,12 +252,25 @@ def cmd_approve(ctx: _Context) -> str:
     return "\n".join(lines)
 
 
+_PREVIEW = "preview"  # kept in the offers tab: (week, "preview") holds ["delivered"] once the Sunday preview reached me
+
+
+def cmd_delivered(ctx: _Context) -> str:
+    """The agent runs this after the preview message has actually been delivered. Silent."""
+    week = _pending_week(ctx)
+    if week is not None:
+        ctx.store.save_offers(_PREVIEW, week, ["delivered"])
+    return ""
+
+
 def cmd_autoadd(ctx: _Context) -> str:
     """Add whatever is still only proposed. Runs at 11pm on Sunday, when "this week" is the one that is ending,
     so it uses the same week as `approve`: the earliest week with proposed picks and a weekday left."""
     week = _pending_week(ctx)
     if week is None:
         return ""
+    if not ctx.store.load_offers(_PREVIEW, week):  # no reply is only approval if the preview was seen
+        return messages.not_previewed()
     _, failures = _approve_week(ctx, week)
     return "\n".join([messages.autoadded(), *failures])
 
@@ -852,7 +866,7 @@ class _Parser(argparse.ArgumentParser):
 def _parser() -> argparse.ArgumentParser:
     parser = _Parser(prog="weekly_picker")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("sunday", "pick", "approve", "autoadd", "check-ran", "undo", "low-energy-today", "clash-check", "show"):
+    for name in ("sunday", "pick", "approve", "autoadd", "delivered", "check-ran", "undo", "low-energy-today", "clash-check", "show"):
         sub.add_parser(name)
     fav = sub.add_parser("fav")
     fav.add_argument("what", nargs="+")
@@ -916,7 +930,7 @@ def main(argv: list[str], *, store=None, calendar=None, client=None, label_clien
 
 def _dispatch(ctx: _Context, c: str, args) -> str:
     simple = {"sunday": lambda: cmd_sunday(ctx, False), "pick": lambda: cmd_sunday(ctx, True),
-              "approve": lambda: cmd_approve(ctx), "autoadd": lambda: cmd_autoadd(ctx),
+              "approve": lambda: cmd_approve(ctx), "autoadd": lambda: cmd_autoadd(ctx), "delivered": lambda: cmd_delivered(ctx),
               "check-ran": lambda: cmd_check_ran(ctx), "undo": lambda: cmd_undo(ctx),
               "low-energy-today": lambda: cmd_low_energy_today(ctx), "clash-check": lambda: cmd_clash_check(ctx),
               "show": lambda: cmd_show(ctx), "favs": lambda: cmd_favs(ctx)}

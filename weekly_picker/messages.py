@@ -82,6 +82,11 @@ def autoadded() -> str:
     return "Added this week's classes, reply undo to remove."
 
 
+def not_previewed() -> str:
+    return ("I haven't added this week's classes because I can't confirm the preview reached you. "
+            "Reply show to see them, then ok to add them.")
+
+
 def not_run() -> str:
     return "This week's classes weren't picked yet. Reply pick to run it now."
 

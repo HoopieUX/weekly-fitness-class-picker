@@ -66,3 +66,21 @@ The calls I made while building, each with what it costs if wrong. Written in th
   fourth day is included. Cost if wrong: a stray proposed pick from an earlier week would not be added.
 - **Why silence is safe here.** If the 18:00 job fails, there is nothing to add, so auto-add says nothing on
   purpose; the 19:00 check is what tells me. Two separate jobs, so one failing does not hide the other.
+
+## Placement window and the delivery rule
+
+- **Classes are placed between 09:00 and 12:00 only, preferably starting at 10:00.** Before this the search ran from
+  07:00 to 21:00, so a busy morning could push a class to the evening. The default slot time is now 10:00. A
+  preferred time outside the window falls back to 10:00. Cost if wrong: a very busy morning leaves a class out
+  instead of moving it to the afternoon.
+- **Nothing fits means nothing is placed, and I am told.** The weekly message says "nothing placed this week", and a
+  swap that cannot fit says so and leaves the slot as it was. This fixed a second bug: a swap used to fall back to
+  the old time even when it overlapped something. Cost if wrong: a slot stays empty until I choose a time.
+- **A time I choose myself is respected.** "Move Tue to 14:00" is allowed outside the window, because it is my
+  explicit choice. Only automatic placement is limited. Cost if wrong: I can put a class outside the window by hand.
+- **No reply only counts as approval if I actually saw the preview.** The picker cannot see WhatsApp, so the agent
+  runs `delivered` after sending the preview, and auto-add checks for it. If it is missing, nothing is added and the
+  message says so, so the failure is never silent. A new plan clears the mark, so a changed week has to be shown again.
+  Cost if wrong: if the agent forgets `delivered`, I have to say "ok" myself.
+- **The mark is kept in the existing offers tab,** under the name "preview", rather than adding a column to picks.
+  Cost if wrong: one slightly odd row in a tab.
