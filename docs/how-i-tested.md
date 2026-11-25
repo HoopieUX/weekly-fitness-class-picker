@@ -19,7 +19,7 @@ Everything else runs with no keys and no network.
 | 5d | Nothing fits between 09:00 and 12:00 | Classes never start before 09:00 or end after 12:00; 10:00 is preferred, then the nearest free 15 minutes; a class that cannot fit is left out and reported, and a swap never forces one in | `test_timeslots.py`, `test_picker.py`, `test_commands.py` |
 | 6 | The Sunday job runs twice | Proposed picks are replaced, scheduled ones are kept, and one-off requests are not lost | `test_commands.py` |
 | 7 | You ask for picks on a Monday, midweek or after the last slot | It plans the right week, and only the slots still ahead | `test_commands.py` |
-| 8 | Jev is down | Plain rules still produce a week, and the message says "picked without Jev" | `test_commands.py`, `test_messages.py` |
+| 8 | No Jev key, or Jev is down | The weekly run needs neither: it never calls Jev and ranks from the saved labels | `test_commands.py` |
 | 9 | The calendar write fails | It names the class that did not save and keeps the pick as proposed | `test_commands.py`, `test_gcal.py` |
 | 10 | Typos and odd replies ("Tue", "tues", "TUESDAY", nonsense) | Day names work any way you type them; bad input gets a one-line answer, never silence | `test_replies.py`, `test_commands.py` |
 | 11 | A low-energy day or week, or a cycle start date | Slots in the window are re-picked as gentler classes with the same goal | `test_replies.py`, `test_picker.py` |
@@ -30,6 +30,6 @@ Everything else runs with no keys and no network.
 
 ## What the tests do not prove
 
-- They use a fake calendar and a fake Jev, so they show the logic is right, not that Jev's judgements are good.
+- They use a fake calendar and made-up labels, so they show the logic is right, not that Jev's judgements are good.
   I checked the labels by eye in the sheet instead.
-- The sample in this repo ranks from Jev's saved labels, not a live Jev call.
+- The sample in this repo ranks from Jev's saved labels, which is exactly how the live version ranks too.

@@ -1,5 +1,5 @@
-from weekly_picker.jev import GOALS, PHYSIO_AREAS, class_state, label_questions, make_ranker, rank, to_labels
-from tests.fakes import FakeSyncClient, fake_response
+from weekly_picker.jev import GOALS, PHYSIO_AREAS, class_state, label_questions, to_labels
+from tests.fakes import fake_response
 from tests.helpers import cls
 
 
@@ -64,29 +64,3 @@ def test_to_labels_reads_optional_answers_when_present():
         weight_needed={"light": 0.8, "none": 0.2}, focus={"core": 0.6, "legs": 0.4},
     ))
     assert l.weight_needed == "light" and l.focus == "core"
-
-
-def test_rank_asks_one_score_per_candidate_in_one_request():
-    client = FakeSyncClient(scores={"a": 3.0, "b": 0.0})
-    out = rank(client, "strength", ["low energy"], [cls(id="a"), cls(id="b")])
-    assert client.calls == 1 and set(client.questions) == {"a", "b"}
-    assert out == {"a": (1.0, 0.9), "b": (0.0, 0.9)}
-    assert client.state["request"] == {"goal": "strength", "modifiers": ["low energy"]}
-    assert set(client.state["classes"]) == {"ca", "cb"}  # keys are valid paths: `classes.ca`
-    assert "`classes.ca`" in client.questions["a"].instructions
-
-
-def test_rank_caps_candidates_at_forty():
-    client = FakeSyncClient()
-    out = rank(client, "strength", [], [cls(id=str(i)) for i in range(60)])
-    assert len(out) == 40 and len(client.questions) == 40
-
-
-def test_rank_with_no_candidates_makes_no_call():
-    client = FakeSyncClient()
-    assert rank(client, "strength", [], []) == {} and client.calls == 0
-
-
-def test_make_ranker_binds_the_client():
-    client = FakeSyncClient(scores={"a": 1.5})
-    assert make_ranker(client)("calm", [], [cls(id="a")]) == {"a": (0.5, 0.9)}

@@ -2,7 +2,7 @@
 
 ![tests](https://github.com/HoopieUX/weekly-fitness-class-picker/actions/workflows/tests.yml/badge.svg)
 
-Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once; plain code does the rest.
+Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once and saves the result; after that, plain code does the weekly work.
 
 <!-- IMAGE: GIF of WhatsApp message to approval to calendar, or remove and use the stills below -->
 
@@ -16,14 +16,14 @@ Every Sunday it picks an on-demand fitness class for each of my days (Monday to 
 
 - **Me:** I planned it with Claude Code and set every parameter (days, times, goals, equipment, class length).
 - **Claude Code:** wrote the code and the tests.
-- **Jev:** reads each class once and judges it (goal, strength, weight needed, how gentle it is, physio areas). It ranks the shortlist each week.
+- **Jev:** reads each class once and judges it (goal, strength, weight needed, how gentle it is, physio areas), then saves those labels. It only looks again if my parameters change or I add new classes.
 - **Plain code:** filters classes, balances the week, books the calendar, checks for clashes. This part must not fail, so no AI sits in it.
 
 ```mermaid
 flowchart LR
     A["Agent<br/>(Instinct, Muse or Claude Code)"] -->|runs commands| P["weekly_picker<br/>(command-line tool)"]
     P -->|reads| L["Jev's saved labels<br/>(one judgement per class)"]
-    P -->|asks each week| J["Jev<br/>(ranks the shortlist)"]
+    J["Jev<br/>(labels each class once)"] -->|saves| L
     P -->|books and checks clashes| C["Google Calendar"]
     P <-->|stores| S["Google Sheet<br/>(classes, labels, picks, settings)"]
     A <-->|WhatsApp| Me["Me"]
@@ -33,7 +33,7 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A["Sunday evening: picker filters classes with my rules and ranks them with Jev"] --> B["WhatsApp message: the week's picks, a reason for each"]
+    A["Sunday evening: picker filters classes with my rules and ranks them from Jev's saved labels"] --> B["WhatsApp message: the week's picks, a reason for each"]
     B --> R{"My reply"}
     R -->|ok| CAL["Classes go into Google Calendar"]
     R -->|swap| SW["Five alternatives, I choose one"] --> B
@@ -59,7 +59,7 @@ Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks
 | `weekly_picker/commands.py` | The command-line interface; every command returns the text to send back |
 | `weekly_picker/config.py` | A few constants: time zone, cardio cut-off, repeat window |
 | `weekly_picker/gcal.py` | Reads busy times and creates, moves and deletes calendar events |
-| `weekly_picker/jev.py` | Asks Jev to label and rank classes |
+| `weekly_picker/jev.py` | The questions Jev answers when it labels a class |
 | `weekly_picker/labeller.py` | Runs Jev over every class once, resuming if interrupted |
 | `weekly_picker/messages.py` | All the chat wording, one class per line |
 | `weekly_picker/models.py` | The data shapes: class, labels, pick, settings |
@@ -87,7 +87,7 @@ Built with Claude Code; I now talk to it through Instinct on WhatsApp.
 
 Instinct reads this repo for the code. Agents should start with [docs/for-agents.md](docs/for-agents.md): the weekly schedule and which command each reply maps to.
 
-With Claude Code, the weekly booking only needs Haiku. Jev has already made the judgements, so the agent is only running commands and passing on my replies. The cheapest model that can do that reliably is the right one.
+With Claude Code, the weekly booking only needs Haiku. Jev has already done the hard thinking by labelling every class once, so the agent is only running commands and passing on my replies. A lower-level model is the right one for that.
 
 ## Try the sample
 
@@ -105,7 +105,7 @@ python3 -m venv .venv
 .venv/bin/python scripts/demo.py
 ```
 
-No Google account and no Jev key needed. The demo ranks from Jev's saved labels. The live version asks Jev each week.
+No Google account and no Jev key needed. The demo ranks from Jev's saved labels, and so does the live version: Jev labels each class once, and only labels again if my parameters change or I add new classes.
 
 ## How it was tested
 
@@ -114,7 +114,7 @@ The test suite runs on every push (see the badge). A few tests need the private 
 ## What's next
 
 - Images and a short walkthrough of a real week.
-- Logging why Jev failed, so "picked without Jev" is easier to diagnose.
+- A command to relabel only the classes affected when I change a parameter.
 - Moving storage from Google Sheets to a database, which only means rewriting `store.py`.
 
 ## A note on this repo

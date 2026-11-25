@@ -23,7 +23,7 @@ consistently. No pure cardio unless asked for.
 | Planning, and every parameter (slots, goals, equipment, length range) | Georgia, with Claude Code | These are personal choices, so a person sets them |
 | Writing the code and tests | Claude Code | Fast, and the tests check it |
 | Reading each class and judging it (goal, strength, weight needed, low-energy fit, physio areas) | Jev, once per class | A judgement call, so a model is the right tool |
-| Ranking the shortlist against a slot goal | Jev, each week (or saved labels in the sample) | Another judgement call |
+| Ranking the shortlist against a slot goal | Plain code, from Jev's saved labels | The judgement was already made when each class was labelled |
 | Filtering, balancing the week, booking, clash checks | Plain code | It must not fail, and it must be testable |
 | Understanding free-text replies | The chat agent (Instinct on WhatsApp) | It turns "move Tuesday to 2pm" into a command |
 
@@ -37,7 +37,7 @@ Code owns the weekly run. The agent owns the conversation. Jev never talks to th
 | Settings | Slots, slot goals, equipment, length range, allowed styles, low-energy days |
 | History | Every pick, its status and feedback |
 | Cycle (optional) | Period start dates, if the feature is used |
-| Labeller | Asks Jev about every class once, and again only when a question changes |
+| Labeller | Asks Jev about every class once, and again only when a question changes or new classes are added |
 | Weekly picker | Filters, ranks, checks the calendar, writes proposed picks |
 | Clash checker | Every 30 minutes through the day, moves a class if a new event lands on it |
 | Chat agent | Sends and reads messages, runs the picker's commands |
@@ -66,11 +66,10 @@ Everything else is plain rules, not Jev.
 2. **Match the slot goal** using Jev's label.
 3. **Balance the week.** Different focus areas across the week's classes (full body allowed once), and no
    instructor twice when instructors are known. If nothing fits, the rules relax in steps rather than failing.
-4. **Rank** the shortlist against the slot goal. Liked and favourite classes get a nudge; "too hard" and
+4. **Rank** the shortlist against the slot goal, using the probabilities Jev saved when it labelled each class. Liked and favourite classes get a nudge; "too hard" and
    "too easy" feedback moves the preferred strength level.
-5. **Be honest about confidence.** If nothing clears the threshold, the best option is sent marked "less sure".
-6. **Check the calendar.** Classes only go between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15-minute slot that day, else the next free weekday. If nothing fits, the class is left out and the message says so.
-7. **Write the picks** as proposed. They become real calendar events on "ok", or automatically at 23:00 on Sunday if there is no reply.
+5. **Check the calendar.** Classes only go between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15-minute slot that day, else the next free weekday. If nothing fits, the class is left out and the message says so.
+6. **Write the picks** as proposed. They become real calendar events on "ok", or automatically at 23:00 on Sunday if there is no reply.
 
 ## The weekly rhythm
 
@@ -85,7 +84,7 @@ Everything else is plain rules, not Jev.
 
 | Situation | Behaviour |
 | --- | --- |
-| Jev is down | Plain-rules pick from the shortlist; the message says "picked without Jev this week" |
+| Jev is unavailable | Nothing changes for the weekly run, because the labels are already saved. Only newly added classes wait to be labelled |
 | A calendar write fails | The message says which class did not save, with its link |
 | The weekly job did not run | A check message tells the user nothing was drafted |
 | Two commands at once | They queue behind a lock, so they never interleave |

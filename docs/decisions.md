@@ -19,7 +19,7 @@ The calls I made while building, each with what it costs if wrong. Written in th
 - **Plain rules sit under Jev.** Cardio cut-off, heavy weights, partner workouts, disliked classes and the
   four-week repeat window are code, not a model's opinion. Cost if wrong: a rule is too blunt (the partner rule
   was tuned against the real catalogue for this reason).
-- **Jev down means a plain-rules week, said out loud.** Cost if wrong: a less well-matched week.
+- **Jev being down cannot break the week,** because the weekly run does not call Jev (see the last section).
 - **The "more" alternatives are saved,** so "choose 2" picks the class that was offered even if Jev's order shifts
   between calls. Cost if wrong: one extra tab.
 - **A failed write never wipes saved rows.** New rows land first, then only the leftover tail is cleared. Cost if
@@ -54,7 +54,6 @@ The calls I made while building, each with what it costs if wrong. Written in th
 - Moving a class that has already started says "moved" but moves nothing.
 - "Request style" with every slot booked replaces Monday without asking.
 - Equipment text shows only the first item when a class needs several.
-- The reason Jev failed is not logged, so "picked without Jev" is hard to diagnose.
 
 ## A failure found while changing the schedule
 
@@ -84,3 +83,15 @@ The calls I made while building, each with what it costs if wrong. Written in th
   Cost if wrong: if the agent forgets `delivered`, I have to say "ok" myself.
 - **The mark is kept in the existing offers tab,** under the name "preview", rather than adding a column to picks.
   Cost if wrong: one slightly odd row in a tab.
+
+## Jev labels once; the weekly run never calls it
+
+- **The weekly pick ranks from Jev's saved labels, with no Jev call.** An earlier version asked Jev to score the
+  shortlist every Sunday and fell back to the saved labels only when Jev was down. That was a second, repeated
+  judgement on work already done, and it made the weekly run depend on a key and a network call for no real gain.
+  Jev now labels each class once, and labels again only when a question changes or new classes are added.
+  Cost if wrong: the ranking cannot react to something the labels do not capture. The fix would be a new label.
+- **It also means a small model can run the week.** All the hard thinking is saved, so the agent only passes commands
+  and replies along.
+- **The "picked without Jev" message and the "less sure" flag no longer fire.** The stored columns are kept so old
+  rows still read. Cost if wrong: two unused columns.

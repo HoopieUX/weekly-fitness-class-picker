@@ -30,7 +30,8 @@ def run_demo(sample_dir: Path, week: date, today: date) -> str:
         c, label = by_id[p.class_id], labels[p.class_id]
         lines.append(f"{p.slot}  {p.start:%H:%M}  {c.title} ({c.mins} min)  "
                      f"{label.main_goal}, {label.goal_probs.get(label.main_goal, 0):.0%} sure")
-    lines += ["", "Ranked from Jev's saved labels. The live version asks Jev each week."]
+    lines += ["", "Ranked from Jev's saved labels, the same way the live version does. "
+              "Jev only labels again if the parameters change or new classes are added."]
     return "\n".join(lines)
 
 

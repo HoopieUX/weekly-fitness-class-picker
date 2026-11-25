@@ -45,20 +45,3 @@ class FakeClient:
         if self.fail_on_call == self.calls:
             raise RuntimeError("boom")
         return response_for(questions)
-
-
-class FakeSyncClient:
-    """Sync stand-in for TypeSafeClient: every Score question gets `scores[id]` (default 1.5)."""
-
-    def __init__(self, scores=None, confidence=0.9, fail=False):
-        self.calls, self.scores, self.confidence, self.fail = 0, scores or {}, confidence, fail
-        self.state = self.questions = None
-
-    def system_one(self, state, questions):
-        self.calls += 1
-        if self.fail:
-            raise RuntimeError("TypeSafe is down")
-        self.state, self.questions = state, questions
-        out = {name: SimpleNamespace(score=self.scores.get(name, 1.5), confidence=self.confidence)
-               for name in questions}
-        return SimpleNamespace(choices={}, scores=out, nouls={})

@@ -53,11 +53,17 @@ def test_check_ran(env):
     assert env.run("check-ran") == ""
 
 
-def test_jev_down_falls_back_to_plain_rules(env):
-    env.client.fail = True
+def test_the_weekly_run_never_calls_jev(env, monkeypatch):
+    """Jev labels each class once. The weekly pick reads those saved labels, so it needs no Jev key at all."""
+    import typesafe_sdk
+
+    def refuse(*a, **k):
+        raise AssertionError("the weekly run reached for Jev")
+
+    monkeypatch.setattr(typesafe_sdk, "TypeSafeClient", refuse)
     text = env.run("sunday")
-    assert text.endswith("Picked without Jev this week.")
-    assert [p.status for p in env.week()] == ["proposed"] * 3 and not any(p.jev_used for p in env.week())
+    assert "without Jev" not in text
+    assert [p.status for p in env.week()] == ["proposed"] * 3 and all(p.jev_used for p in env.week())
 
 
 def test_running_sunday_twice_replaces_proposed_but_keeps_scheduled(env):

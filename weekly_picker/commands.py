@@ -9,7 +9,7 @@ from pathlib import Path
 
 from weekly_picker import messages
 from weekly_picker.config import TZ
-from weekly_picker.jev import GOALS, make_ranker
+from weekly_picker.jev import GOALS
 from weekly_picker.labeller import label_all, label_all_async
 from weekly_picker.models import AloClass, Favourite, Labels, Pick
 from weekly_picker.picker import alternatives, focus_of, label_ranker, plan_week
@@ -56,8 +56,8 @@ def _active_week(picks: list[Pick], now: datetime) -> date | None:
 
 
 class _Context:
-    def __init__(self, store, calendar, client, label_client, now):
-        self._store, self._calendar, self._client, self.label_client = store, calendar, client, label_client
+    def __init__(self, store, calendar, label_client, now):
+        self._store, self._calendar, self.label_client = store, calendar, label_client
         self.now = now
 
     @property
@@ -77,35 +77,13 @@ class _Context:
             self._calendar = Calendar(google_creds())
         return self._calendar
 
-    def jev_client(self):
-        if self._client is None:
-            from dotenv import load_dotenv
-            from typesafe_sdk import TypeSafeClient
-
-            from weekly_picker.store import ROOT
-
-            load_dotenv(ROOT / ".env")
-            self._client = TypeSafeClient()
-        return self._client
-
-
 def _by_slot(picks: list[Pick]) -> list[Pick]:
     return sorted(picks, key=lambda p: _DAYS.index(p.slot))
 
 
 def _ranker(ctx: _Context, labels: dict[str, Labels]):
-    """Jev ranking that quietly falls back to the saved labels when TypeSafe is unavailable."""
-    fallback, state = label_ranker(labels), {"jev": True}
-
-    def ranker(goal, modifiers, candidates):
-        if state["jev"]:
-            try:
-                return make_ranker(ctx.jev_client())(goal, modifiers, candidates)
-            except Exception:  # noqa: BLE001  (TypeSafe down, no key, rate limit)
-                state["jev"] = False
-        return fallback(goal, modifiers, candidates)
-
-    return ranker, state
+    """Rank from the labels Jev saved. Jev labels each class once, so the weekly run never calls it."""
+    return label_ranker(labels), {"jev": True}
 
 
 def _week_window(week: date) -> tuple[datetime, datetime]:
@@ -912,13 +890,13 @@ def _parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: list[str], *, store=None, calendar=None, client=None, label_client=None,
+def main(argv: list[str], *, store=None, calendar=None, label_client=None,
          now: datetime | None = None) -> str:
     try:
         args = _parser().parse_args(argv)
     except _UsageError as e:
         return f"I couldn't understand that command ({e}). Try again, or say it another way."
-    ctx = _Context(store, calendar, client, label_client, now or datetime.now(TZ))
+    ctx = _Context(store, calendar, label_client, now or datetime.now(TZ))
     c = args.command
     for attr in ("slot", "day"):  # day names from replies are lowercase or full ("thu", "thursday")
         if getattr(args, attr, None):

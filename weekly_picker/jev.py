@@ -1,4 +1,4 @@
-"""Jev (TypeSafe) questions about a class. Jev never talks to Georgia; code reads its answers."""
+"""Jev (TypeSafe) labels each class once. Jev never talks to Georgia; code reads its saved answers."""
 from dataclasses import replace
 
 from typesafe_sdk import Choice, Noul, Score
@@ -146,35 +146,4 @@ def to_labels(c: AloClass, response) -> Labels:
     ), response)
 
 
-_FIT_LEVELS = [
-    "Poor fit: does not serve the request",
-    "Partial fit: serves part of the request",
-    "Good fit: serves the request well",
-    "Great fit: exactly what the request asks for",
-]
-MAX_CANDIDATES = 40
-
-
-def rank(client, goal: str, modifiers: list[str], candidates: list[AloClass]) -> dict[str, tuple[float, float]]:
-    """One request, one Score per candidate. Returns class id -> (fit 0..1, confidence). `client` is a sync TypeSafeClient."""
-    candidates = candidates[:MAX_CANDIDATES]
-    if not candidates:
-        return {}
-    state = {
-        "request": {"goal": goal, "modifiers": list(modifiers)},
-        "classes": {f"c{c.id}": class_state(c)["class"] for c in candidates},
-    }
-    questions = {
-        c.id: Score(
-            instructions=f"How well does `classes.c{c.id}` fit the request in `request`? `request.goal` is what the "
-                         "person wants from the class; `request.modifiers` are extra wishes such as low energy.",
-            criteria=list(_FIT_LEVELS),
-        )
-        for c in candidates
-    }
-    scores = client.system_one(state, questions).scores
-    return {c.id: (scores[c.id].score / (len(_FIT_LEVELS) - 1), scores[c.id].confidence) for c in candidates}
-
-
-def make_ranker(client):
-    return lambda goal, modifiers, candidates: rank(client, goal, modifiers, candidates)
+MAX_CANDIDATES = 40  # the weekly shortlist size (the picker ranks it from Jev's saved labels)

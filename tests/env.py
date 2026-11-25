@@ -6,7 +6,6 @@ from weekly_picker.config import TZ
 from weekly_picker.gcal import BusyEvent
 from weekly_picker.models import AloClass
 from weekly_picker.store import InMemoryStore
-from tests.fakes import FakeSyncClient
 from tests.helpers import cls, lab
 from tests.world import WEEK, World
 
@@ -58,14 +57,14 @@ class Env:
             self.world.labels[c.id] = lab(class_id=c.id, main_goal="other", goal_probs={"other": 0.9}, strength=0.5)
         self.store = InMemoryStore(self.world.classes)
         self.store.save_labels(list(self.world.labels.values()))
-        self.calendar, self.client = FakeCalendar(), FakeSyncClient()
+        self.calendar = FakeCalendar()
         self.last = []
         self.now = datetime(2026, 10, 11, 18, 0, tzinfo=TZ)  # Sunday 6pm
         self.target = WEEK
 
     def run(self, *argv, **kw):
         args = [word for part in argv for word in shlex.split(part)]
-        return main(args, store=self.store, calendar=self.calendar, client=self.client, now=self.now, **kw)
+        return main(args, store=self.store, calendar=self.calendar, now=self.now, **kw)
 
     def at(self, text: str):
         self.now = datetime.fromisoformat(text).replace(tzinfo=TZ)
