@@ -277,3 +277,33 @@ def test_a_longer_class_put_into_a_booked_slot_does_not_run_into_the_next_event(
     assert tue.class_id == "long"
     end = tue.start + timedelta(minutes=60)
     assert end.hour * 60 + end.minute <= 10 * 60 or tue.start.hour >= 11
+
+
+def test_autoadd_at_11pm_on_sunday_adds_the_week_that_is_about_to_start(env):
+    env.run("sunday"); env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == messages.autoadded()
+    assert env.calendar.created == 3 and {p.status for p in env.week()} == {"scheduled"}
+
+
+def test_a_reply_before_11pm_means_autoadd_stays_quiet(env):
+    env.run("sunday"); env.at("2026-10-11 22:00"); env.run("approve"); env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == "" and env.calendar.created == 3
+
+
+def test_a_change_at_10_55pm_is_still_added_at_11pm(env):
+    env.run("sunday"); env.at("2026-10-11 22:55"); env.run("low-energy-today")
+    env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == messages.autoadded()
+    assert env.calendar.created == 3
+
+
+def test_autoadd_with_nothing_picked_is_silent_so_check_ran_is_the_alarm(env):
+    env.at("2026-10-11 23:00")
+    assert env.run("autoadd") == "" and env.calendar.created == 0
+    assert env.run("check-ran") != ""
+
+
+def test_autoadd_at_11pm_covers_a_fourth_day(env):
+    env.run("set-slot Thu 09:30 strength"); env.run("sunday"); env.at("2026-10-11 23:00")
+    env.run("autoadd")
+    assert env.calendar.created == 4

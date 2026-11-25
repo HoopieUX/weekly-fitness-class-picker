@@ -13,7 +13,8 @@ Everything else runs with no keys and no network.
 | 2 | The whole day is full | The class moves to another weekday in the same week, never onto another class | `test_clash.py`, `test_timeslots.py` |
 | 3 | The clash checker runs twice, or nothing clashes | A second run moves nothing; no clash means silence. Past classes are never moved | `test_clash.py` |
 | 4 | There is no free time anywhere | It says so and leaves the class where it is | `test_clash.py` |
-| 5 | You reply "ok" twice, or after the Monday auto-add | Calendar events are created once; the second "ok" is harmless | `test_commands.py` |
+| 5 | You reply "ok" twice, or after the 23:00 Sunday auto-add | Calendar events are created once; the second "ok" is harmless | `test_commands.py` |
+| 5b | Auto-add at 23:00 on Sunday | Adds the week that is about to start (not the one ending), including a fourth day, and includes a change made at 22:55. If I already replied, it stays quiet. If the picks never ran, it stays quiet and the 19:00 check is the alarm | `test_commands.py` |
 | 6 | The Sunday job runs twice | Proposed picks are replaced, scheduled ones are kept, and one-off requests are not lost | `test_commands.py` |
 | 7 | You ask for picks on a Monday, midweek or after the last slot | It plans the right week, and only the slots still ahead | `test_commands.py` |
 | 8 | Jev is down | Plain rules still produce a week, and the message says "picked without Jev" | `test_commands.py`, `test_messages.py` |

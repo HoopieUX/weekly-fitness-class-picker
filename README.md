@@ -2,7 +2,7 @@
 
 ![tests](https://github.com/HoopieUX/weekly-fitness-class-picker/actions/workflows/tests.yml/badge.svg)
 
-Every Sunday it picks three on-demand fitness classes for the week, explains why, and puts them in Google Calendar. Jev (an AI) judges each class once; plain code does the rest.
+Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, same time each day), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once; plain code does the rest.
 
 <!-- IMAGE: GIF of WhatsApp message to approval to calendar, or remove and use the stills below -->
 
@@ -33,14 +33,14 @@ flowchart LR
 
 ```mermaid
 flowchart TD
-    A["Sunday evening: picker filters classes with my rules and ranks them with Jev"] --> B["WhatsApp message: three picks, a reason for each"]
+    A["Sunday evening: picker filters classes with my rules and ranks them with Jev"] --> B["WhatsApp message: the week's picks, a reason for each"]
     B --> R{"My reply"}
     R -->|ok| CAL["Classes go into Google Calendar"]
     R -->|swap| SW["Five alternatives, I choose one"] --> B
     R -->|skip| SK["Class removed from the week"] --> CAL
     R -->|fav| FV["Class saved as a favourite, picks lean towards it"] --> CAL
     R -->|"how I feel: 'low energy today', 'something longer', 'no physio'"| F["Agent turns it into a setting and re-picks the class to suit"] --> B
-    R -->|no reply| M["Monday 08:00: classes added automatically, with an undo option"]
+    R -->|"no reply by 23:00"| M["Sunday 23:00: classes added automatically, with an undo option"]
     M --> CAL
     CAL --> K["Through the day: clash checker moves a class if a new event lands on it"]
     K --> FB["After a class: like, too hard, too easy"]
@@ -48,7 +48,7 @@ flowchart TD
     N --> A
 ```
 
-Run times are Sunday 18:00 for the picks, Monday 08:00 for the auto-add, and clash checks every 30 minutes from 07:00 to 21:30. They live in the scheduler, not in this code.
+Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks never ran; anything I have not replied to goes into the calendar automatically at 23:00 on Sunday; clash checks every 30 minutes from 07:00 to 21:30. The days, times and goals are my settings (Monday to Thursday), and the run times live in the scheduler, not in this code.
 
 ## Code map
 
@@ -74,7 +74,7 @@ Run times are Sunday 18:00 for the picks, Monday 08:00 for the auto-add, and cla
 
 ## How I use it
 
-<!-- IMAGE: still 1, the Sunday message with three picks and reasons -->
+<!-- IMAGE: still 1, the Sunday message with the week's picks and reasons -->
 <!-- IMAGE: still 2, a conversation (a swap, or "ok") -->
 <!-- IMAGE: still 3, the approval -->
 <!-- IMAGE: still 4, the calendar week -->

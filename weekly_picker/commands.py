@@ -252,8 +252,10 @@ def cmd_approve(ctx: _Context) -> str:
 
 
 def cmd_autoadd(ctx: _Context) -> str:
-    week = current_week(ctx.now)
-    if not any(p.week == week and p.status == "proposed" and p.class_id for p in ctx.store.load_picks()):
+    """Add whatever is still only proposed. Runs at 11pm on Sunday, when "this week" is the one that is ending,
+    so it uses the same week as `approve`: the earliest week with proposed picks and a weekday left."""
+    week = _pending_week(ctx)
+    if week is None:
         return ""
     _, failures = _approve_week(ctx, week)
     return "\n".join([messages.autoadded(), *failures])

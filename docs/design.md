@@ -4,7 +4,7 @@ This is how the picker works now. It was planned first, then built, then correct
 
 ## Purpose
 
-Every Sunday, pick three on-demand fitness classes for the coming week and put them in Google Calendar, so there
+Every Sunday, pick an on-demand fitness class for each slot in the coming week (Monday to Thursday in my settings) and put them in Google Calendar, so there
 is no scrolling through thousands of classes and no daily decision.
 
 In priority order:
@@ -64,19 +64,20 @@ Everything else is plain rules, not Jev.
 1. **Filter.** Length 10 to 30 minutes; all equipment owned (after normalising names); style allowed; not cardio;
    no heavy weights; no partner workouts; not disliked; not done in the last four weeks unless asked for.
 2. **Match the slot goal** using Jev's label.
-3. **Balance the week.** Different focus areas across the three classes (full body allowed once), and no
+3. **Balance the week.** Different focus areas across the week's classes (full body allowed once), and no
    instructor twice when instructors are known. If nothing fits, the rules relax in steps rather than failing.
 4. **Rank** the shortlist against the slot goal. Liked and favourite classes get a nudge; "too hard" and
    "too easy" feedback moves the preferred strength level.
 5. **Be honest about confidence.** If nothing clears the threshold, the best option is sent marked "less sure".
 6. **Check the calendar.** On a clash, use the nearest free time that day, else the next free weekday.
-7. **Write the picks** as proposed. They become real calendar events on "ok", or automatically on Monday morning.
+7. **Write the picks** as proposed. They become real calendar events on "ok", or automatically at 23:00 on Sunday if there is no reply.
 
 ## The weekly rhythm
 
-- Sunday evening: picks are made and a message goes out.
+- Sunday 18:00: picks are made and a message goes out.
+- Sunday 19:00: a check tells me if the picks never ran.
 - Reply "ok" to add them, change them in plain words, or say nothing.
-- Monday morning: with no reply, the picks are added anyway, and the message says how to undo.
+- Sunday 23:00: with no reply, the picks are added anyway, and the message says how to undo. Anything I changed before then is what gets added.
 - Through the day: the clash checker keeps booked classes clear of new events.
 - After a class: "like", "too hard" and so on feed the next week.
 

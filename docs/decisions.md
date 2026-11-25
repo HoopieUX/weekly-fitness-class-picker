@@ -25,7 +25,7 @@ The calls I made while building, each with what it costs if wrong. Written in th
 - **A failed write never wipes saved rows.** New rows land first, then only the leftover tail is cleared. Cost if
   wrong: none.
 - **Bad input gets a one-line answer.** A typo should never look like the picker went quiet.
-- **Undo is real.** Clash moves, "ok" and the Monday auto-add can all be reversed, and undoing one class does not
+- **Undo is real.** Clash moves, "ok" and the Sunday night auto-add can all be reversed, and undoing one class does not
   undo the whole week. Cost if wrong: undo after "choose" or "repeat" removes the whole week.
 
 ## Behaviour
@@ -55,3 +55,14 @@ The calls I made while building, each with what it costs if wrong. Written in th
 - "Request style" with every slot booked replaces Monday without asking.
 - Equipment text shows only the first item when a class needs several.
 - The reason Jev failed is not logged, so "picked without Jev" is hard to diagnose.
+
+## A failure found while changing the schedule
+
+- **Auto-add used to run on Monday morning, so it looked at "this week".** When I moved it to 23:00 on Sunday, "this
+  week" is the week that is ending, so the job would have found nothing and said nothing: the classes would never
+  have reached the calendar. The fix is that auto-add now uses the same week as "ok": the earliest week with
+  proposed picks and a weekday still to come. Five tests cover it: Sunday 23:00 adds the coming week, an earlier "ok"
+  keeps it quiet, a change at 22:55 is still added, nothing picked stays silent (the 19:00 check is the alarm), and a
+  fourth day is included. Cost if wrong: a stray proposed pick from an earlier week would not be added.
+- **Why silence is safe here.** If the 18:00 job fails, there is nothing to add, so auto-add says nothing on
+  purpose; the 19:00 check is what tells me. Two separate jobs, so one failing does not hide the other.
