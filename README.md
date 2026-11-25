@@ -69,6 +69,7 @@ Run times are Sunday 18:00 for the picks, Monday 08:00 for the auto-add, and cla
 | `weekly_picker/store.py` | The only file that touches storage |
 | `weekly_picker/timeslots.py` | Free-time maths: nearest free slot, next free weekday |
 | `scripts/demo.py` | Plans one week from the sample and prints the picks |
+| `scripts/pick_classes.py` | Chooses the sample classes (all three goals, a spread of lengths) and exports a numbered extract with no IDs, links or instructors |
 | `scripts/make_sample.py` | How the sample was built: picks rows, swaps real IDs for demo IDs, drops links and instructors |
 
 ## How I use it
