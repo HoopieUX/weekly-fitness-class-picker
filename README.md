@@ -98,7 +98,7 @@ With Claude Code, the weekly booking only needs Haiku. Jev has already done the 
 
 ## Try the sample
 
-The sample is 20 to 30 classes with made-up names and rewritten descriptions. Lengths, difficulty, equipment and focus are unchanged. There are no links or instructor names, and the IDs are demo IDs (`C-001` onwards). The labels came from Jev reading the real classes and were carried over to the renamed ones.
+The sample is 24 classes (six for each of the four slots) with made-up names and rewritten descriptions. Lengths, difficulty, equipment and focus are unchanged. There are no links or instructor names, and the IDs are demo IDs (`C-001` onwards). The labels came from Jev reading the real classes and were carried over to the renamed ones.
 
 ```bash
 python3 -m venv .venv

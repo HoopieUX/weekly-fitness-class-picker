@@ -1,0 +1,14 @@
+key,value
+slots,"{""Mon"": ""10:00"", ""Tue"": ""10:00"", ""Wed"": ""10:00"", ""Thu"": ""10:00""}"
+slot_goals,"{""Mon"": ""strength"", ""Tue"": ""flexibility"", ""Wed"": ""sculpt and tone"", ""Thu"": ""calm""}"
+min_mins,15
+max_mins,30
+equipment_owned,"[""ankle weights"", ""blanket"", ""blocks"", ""bolster"", ""chair"", ""mat"", ""pilates ball"", ""pillow"", ""resistance bands"", ""socks"", ""towel"", ""wall"", ""weights"", ""yoga strap""]"
+styles_in,"[""skills_flexibility"", ""skills_mobility""]"
+styles_on_request,"[""skills"", ""skills_arm balances"", ""skills_backbends"", ""skills_inversions"", ""skills_yoga poses""]"
+styles_out,"[""skills_how to teach""]"
+low_energy_days,3
+preferred_strength,2.0
+next_week,{}
+extra_days,{}
+ignore_titles,"[""message"", ""remind""]"
