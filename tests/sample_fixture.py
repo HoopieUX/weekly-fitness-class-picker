@@ -26,7 +26,7 @@ def build_sample(folder: Path, cycle_starts: list[str] = ()) -> Path:
             classes.append([cid, f"{goal.title()} {focus} {n}", "20", "beginner", "2", "pilates", "Pilates",
                             "blocks", focus, "False", "A made-up class.", "", ""])
             labels.append([cid, f"{goal.title()} {focus} {n}", goal, json.dumps({goal: 0.9, "other": 0.1}),
-                           "2.0" if goal == "strength" else "0.5", "none", "0.9", focus, "", "0"])
+                           "2.0" if goal == "strength" else "0.5", "none", "0.1" if n == 1 else "0.9", focus, "", "0"])
     _write(folder / "classes.csv", [CLASS_HEADER, *classes])
     _write(folder / "labels.csv", [LABEL_HEADER, *labels])
     _write(folder / "settings.csv", [["key", "value"]])

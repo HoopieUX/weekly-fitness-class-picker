@@ -33,3 +33,12 @@ def test_demo_on_a_low_energy_week(tmp_path):
 
 def test_demo_says_it_ranks_from_saved_labels(tmp_path):
     assert "Ranked from Jev's saved labels" in run_demo(build_sample(tmp_path), WEEK, TODAY)
+
+
+def test_low_energy_week_avoids_a_class_that_is_not_gentle(tmp_path):
+    (tmp_path / "a").mkdir()
+    (tmp_path / "b").mkdir()
+    normal = run_demo(build_sample(tmp_path / "a"), WEEK, TODAY)
+    gentle = run_demo(build_sample(tmp_path / "b", cycle_starts=[WEEK.isoformat()]), WEEK, TODAY)
+    assert "Strength core 1" in normal
+    assert "Strength core 1" not in gentle

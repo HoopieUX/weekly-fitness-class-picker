@@ -37,6 +37,8 @@ def run_demo(sample_dir: Path, week: date, today: date) -> str:
 def main() -> None:
     today = date.today()
     week = today + timedelta(days=(7 - today.weekday()) % 7 or 7)  # the next Monday
+    if not (SAMPLE / "classes.csv").exists():
+        sys.exit("No sample data found in sample/. Build it with scripts/make_sample.py first.")
     print(run_demo(SAMPLE, week, today))
 
 
