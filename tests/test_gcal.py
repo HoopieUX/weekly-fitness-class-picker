@@ -77,7 +77,7 @@ def test_create_builds_the_event_from_alos_format():
     body = ev.calls[0][1]["body"]
     assert body["summary"] == "Day 2: Quick Core" and body["location"] == "ALO Wellness Club On-Demand"
     assert body["start"]["dateTime"] == dt(2026, 10, 13).isoformat() and body["start"]["timeZone"] == "Europe/London"
-    assert body["end"]["dateTime"] == dt(2026, 10, 13, 9, 39).isoformat()
+    assert body["end"]["dateTime"] == dt(2026, 10, 13, 10, 9).isoformat()
     assert body["reminders"] == {"useDefault": False, "overrides": [{"method": "popup", "minutes": 30}]}
     assert body["extendedProperties"]["private"]["alo_class_id"] == "9"
     assert body["description"] == (

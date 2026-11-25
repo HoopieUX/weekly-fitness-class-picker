@@ -18,7 +18,7 @@ def env():
 def test_sunday_proposes_three_picks_and_prints_the_message(env):
     text = env.run("sunday")
     assert [p.status for p in env.week()] == ["proposed"] * 3 and env.calendar.created == 0
-    assert text.splitlines()[0].startswith("* Mon 9:30: ") and text.endswith("Reply ok, or more Mon / Tue / Wed for alternatives")
+    assert text.splitlines()[0].startswith("* Mon 10:00: ") and text.endswith("Reply ok, or more Mon / Tue / Wed for alternatives")
 
 
 def test_approve_creates_the_events_with_a_reason(env):
@@ -116,14 +116,14 @@ def test_pick_on_a_monday_morning_plans_this_week_not_the_next():
 
 def test_pick_midweek_only_plans_the_slots_still_ahead():
     env = Env()
-    env.at("2026-10-13 10:00")  # Tuesday, after Tuesday's 9:30
+    env.at("2026-10-13 10:00")  # Tuesday, after Tuesday's 10:00
     env.run("pick")
     assert [p.slot for p in env.week()] == ["Wed"]
 
 
 def test_pick_after_the_last_slot_plans_next_week():
     env = Env()
-    env.at("2026-10-14 10:00")  # Wednesday, after Wednesday's 9:30
+    env.at("2026-10-14 10:00")  # Wednesday, after Wednesday's 10:00
     env.run("pick")
     assert [p.slot for p in env.week()] == []
     assert [p.slot for p in env.week(WEEK + __import__("datetime").timedelta(days=7))] == ["Mon", "Tue", "Wed"]
@@ -304,6 +304,17 @@ def test_autoadd_with_nothing_picked_is_silent_so_check_ran_is_the_alarm(env):
 
 
 def test_autoadd_at_11pm_covers_a_fourth_day(env):
-    env.run("set-slot Thu 09:30 strength"); env.run("sunday"); env.at("2026-10-11 23:00")
+    env.run("set-slot Thu 10:00 strength"); env.run("sunday"); env.at("2026-10-11 23:00")
     env.run("autoadd")
     assert env.calendar.created == 4
+
+
+def test_a_class_that_cannot_fit_between_9_and_12_is_left_out_and_reported():
+    from tests.helpers import cls
+    env = Env(extra=[cls(id="long", title="Long Favourite Flow", mins=60)])
+    env.run("sunday")
+    before = env.week()[1]
+    env.calendar.add_busy("Workshop", "2026-10-13 09:00", "2026-10-13 12:00")
+    out = env.run("repeat Long Favourite Flow --on Tue")
+    assert "9:00" in out and "12:00" in out and "Long Favourite Flow" in out
+    assert env.week()[1].class_id == before.class_id and env.week()[1].start == before.start

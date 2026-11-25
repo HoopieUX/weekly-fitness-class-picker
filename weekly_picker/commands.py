@@ -540,12 +540,14 @@ def _put(ctx: _Context, data: _Data, week: date, slot: str, c: AloClass, *, requ
     elif old and old.class_id:  # a longer class (a long favourite, say) must not run into the next event
         start_of_week, end = _week_window(week)
         busy = _busy(ctx, data.settings, start_of_week, end, frozenset({old.event_id} - {""}))
-        start = find_same_day(old.start, c.mins, busy) or old.start
+        start = find_same_day(old.start, c.mins, busy)
     else:
         start_of_week, end = _week_window(week)
         busy = _busy(ctx, data.settings, start_of_week, end)
         preferred = slot_start(week, slot, data.settings.slots[slot])
-        start = find_same_day(preferred, c.mins, busy) or preferred
+        start = find_same_day(preferred, c.mins, busy)
+    if start is None:  # nothing fits between 9:00 and 12:00: leave the slot as it was, and say so
+        return messages.no_room(slot, c.title)
     new = Pick(week=week, slot=slot, start=start, class_id=c.id, requested=requested,
                jev_used=old.jev_used if old else True)
     new, failure = _place(ctx, data, old, new)

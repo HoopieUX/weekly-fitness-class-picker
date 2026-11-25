@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date
+from datetime import date, time
 
 from weekly_picker.picker import alternatives, label_ranker, physio_bonus, plan_week
 from tests.helpers import dt, lab, pick
@@ -68,7 +68,7 @@ def test_full_day_moves_the_class_to_another_weekday(world):
 
 
 def test_two_picks_never_double_book_the_same_time(world):
-    world.busy_whole_day(2026, 10, 13)  # Tuesday full: Tue's class moves to Wed 9:30, so Wed's must go elsewhere
+    world.busy_whole_day(2026, 10, 13)  # Tuesday full: Tue's class moves to Wed 10:00, so Wed's must go elsewhere
     picks = plan_week(**world.args())
     assert len({p.start for p in picks}) == 3
     assert all(p.status == "proposed" for p in picks)
@@ -139,7 +139,7 @@ def test_only_and_keep_replan_just_the_missing_slot(world):
 
 def test_kept_picks_still_block_their_time(world):
     wed_all_day = plan_week(**world.args())[2]
-    world.busy_whole_day(2026, 10, 13)  # Tuesday full, so Tue wants Wed 9:30, where the kept Wed pick already sits
+    world.busy_whole_day(2026, 10, 13)  # Tuesday full, so Tue wants Wed 10:00, where the kept Wed pick already sits
     [tue] = plan_week(**world.args(keep=[wed_all_day], only=["Tue"]))
     assert tue.start != wed_all_day.start
 
@@ -266,11 +266,24 @@ def test_a_long_favourite_is_still_ruled_out_by_equipment(world):
 def test_a_long_favourite_that_will_not_fit_gives_way_to_the_next_class(world):
     for day in (13, 14, 15, 16):
         world.busy_whole_day(2026, 10, day)
-    world.busy.append((dt(2026, 10, 12, 0, 0), dt(2026, 10, 12, 9, 30)))  # Monday: only 9:30 to 10:00 is free
-    world.busy.append((dt(2026, 10, 12, 10, 0), dt(2026, 10, 12, 23, 59)))
+    world.busy.append((dt(2026, 10, 12, 0, 0), dt(2026, 10, 12, 10, 0)))  # Monday: only 10:00 to 10:30 is free
+    world.busy.append((dt(2026, 10, 12, 10, 30), dt(2026, 10, 12, 23, 59)))
     strength = [c for c in world.classes if world.labels[c.id].main_goal == "strength"]
     long_fav = replace(strength[0], mins=90)
     world.classes = [long_fav if c.id == long_fav.id else c for c in world.classes]
     picks = plan_week(**world.args(), favourites=frozenset({long_fav.id}))
     mon = picks[0]
     assert mon.status == "proposed" and mon.class_id != long_fav.id
+
+
+def test_every_class_starts_after_9_and_ends_by_12(world):
+    from datetime import timedelta
+    for p in plan_week(**world.args()):
+        c = world.classes_by_id[p.class_id]
+        assert p.start.hour >= 9 and (p.start + timedelta(minutes=c.mins)).time() <= time(12, 0)
+
+
+def test_a_week_with_no_free_morning_places_nothing_and_says_no_match(world):
+    busy = [(dt(2026, 10, 12 + d, 9, 0), dt(2026, 10, 12 + d, 12, 0)) for d in range(5)]
+    picks = plan_week(**world.args(busy=busy))
+    assert [p.status for p in picks] == ["no_match"] * 3 and all(p.class_id == "" for p in picks)

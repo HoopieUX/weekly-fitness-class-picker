@@ -81,7 +81,7 @@ class Settings:
     @staticmethod
     def default() -> "Settings":
         return Settings(
-            slots={"Mon": time(9, 30), "Tue": time(9, 30), "Wed": time(9, 30)},
+            slots={"Mon": time(10, 0), "Tue": time(10, 0), "Wed": time(10, 0)},
             slot_goals={"Mon": "strength", "Tue": "flexibility", "Wed": "sculpt and tone"},
             min_mins=10,
             max_mins=30,

@@ -25,7 +25,7 @@ def lab(**kw) -> Labels:
     return Labels(**base)
 
 
-def dt(y: int, m: int, d: int, h: int = 9, mi: int = 30) -> datetime:
+def dt(y: int, m: int, d: int, h: int = 10, mi: int = 0) -> datetime:
     return datetime(y, m, d, h, mi, tzinfo=TZ)
 
 

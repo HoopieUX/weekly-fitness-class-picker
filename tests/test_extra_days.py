@@ -116,7 +116,7 @@ def test_settings_remember_extra_days():
 
 
 def test_add_day_on_a_wednesday_afternoon_means_tomorrow_even_with_nothing_picked_yet(env):
-    env.at("2026-10-14 15:00")  # Wednesday, after the 9:30 class
+    env.at("2026-10-14 15:00")  # Wednesday, after the 10:00 class
     out = env.run("add-day Thu 10:00 strength")
     assert out.startswith("Updated:\n* Thu 10:00: ")
     [thu] = env.week(WEEK)
@@ -127,8 +127,8 @@ def test_add_day_on_a_wednesday_afternoon_means_tomorrow_even_with_nothing_picke
 
 def test_two_extra_days_this_week_with_a_multi_word_goal_then_ok_adds_both(env):
     env.at("2026-10-14 15:00")
-    env.run("add-day Thu 9:30 strength")
-    env.run("add-day Fri 09:30 sculpt and tone")
+    env.run("add-day Thu 10:00 strength")
+    env.run("add-day Fri 10:00 sculpt and tone")
     picks = env.week(WEEK)
     assert [p.slot for p in picks] == ["Thu", "Fri"]
     assert env.world.labels[picks[1].class_id].main_goal == "sculpt and tone"
@@ -142,14 +142,14 @@ def test_multi_word_goals_work_for_goal_set_goal_and_set_slot(env):
     env.run("goal Tue sculpt and tone")
     assert env.world.labels[env.week()[1].class_id].main_goal == "sculpt and tone"
     assert env.run("set-goal Mon sculpt and tone") == "Mon is now a sculpt and tone day."
-    assert env.run("set-slot Fri 09:30 sculpt and tone").startswith("Fri 9:30 (sculpt and tone) is now a weekly slot.")
+    assert env.run("set-slot Fri 10:00 sculpt and tone").startswith("Fri 10:00 (sculpt and tone) is now a weekly slot.")
 
 
 def test_sunday_planning_ignores_reminder_style_events():
     env = Env()
     env.calendar.add_busy("Message Hex about karaoke", "2026-10-12 09:00", "2026-10-12 10:00")
     env.run("sunday")
-    assert env.week()[0].start.strftime("%H:%M") == "09:30"
+    assert env.week()[0].start.strftime("%H:%M") == "10:00"
 
 
 def test_ignore_events_adds_and_removes_words():
@@ -157,7 +157,7 @@ def test_ignore_events_adds_and_removes_words():
     assert env.run("ignore-events text") == "Okay. Events starting with message, remind, text won't block your classes."
     env.calendar.add_busy("Text Sam back", "2026-10-12 09:00", "2026-10-12 10:00")
     env.run("sunday")
-    assert env.week()[0].start.strftime("%H:%M") == "09:30"
+    assert env.week()[0].start.strftime("%H:%M") == "10:00"
     assert env.run("unignore-events text") == "Okay. Events starting with message, remind won't block your classes."
     assert env.run("unignore-events zebra") == "'zebra' wasn't on the list. Events starting with message, remind don't block your classes."
 

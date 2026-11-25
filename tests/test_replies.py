@@ -112,9 +112,9 @@ def test_move_this_week_vs_permanent(env):
     env.run("sunday"); env.run("approve")
     env.run("move Tue 14:00")
     tue = env.week()[1]
-    assert tue.start == dt(2026, 10, 13, 14, 0) and tue.prev_start == dt(2026, 10, 13, 9, 30)
+    assert tue.start == dt(2026, 10, 13, 14, 0) and tue.prev_start == dt(2026, 10, 13, 10, 0)
     assert env.calendar.events[tue.event_id][1] == dt(2026, 10, 13, 14, 0)
-    assert env.store.load_settings().slots["Tue"] == time(9, 30)
+    assert env.store.load_settings().slots["Tue"] == time(10, 0)
     env.run("move Tue 11:00 --permanent")
     assert env.store.load_settings().slots["Tue"] == time(11, 0) and env.week()[1].start.hour == 11
 
@@ -132,8 +132,8 @@ def test_move_rejects_a_bad_time(env):
 
 def test_undo_after_a_move_only_puts_that_class_back(env):
     env.run("sunday"); env.run("approve"); env.run("move Tue 14:00")
-    assert env.run("undo") == "Put Tue back to 9:30."
-    assert env.week()[1].start == dt(2026, 10, 13, 9, 30) and env.week()[1].prev_start is None
+    assert env.run("undo") == "Put Tue back to 10:00."
+    assert env.week()[1].start == dt(2026, 10, 13, 10, 0) and env.week()[1].prev_start is None
     assert env.calendar.live == 3 and [p.status for p in env.week()] == ["scheduled"] * 3
 
 
@@ -251,7 +251,7 @@ def test_lowercase_days_work_everywhere(env):
     assert env.run("goal ALL strength").startswith("Updated:")
     env.run("feedback mon LIKE")
     assert env.run("repeat monday --on wed") == "I don't have a Mon class that has happened yet."  # "monday" meant Mon
-    assert env.run("add-day fri 09:30 strength").startswith("Updated:\n* Fri 9:30")
+    assert env.run("add-day fri 10:00 strength").startswith("Updated:\n* Fri 10:00")
 
 
 def test_unknown_words_still_get_the_clear_error(env):

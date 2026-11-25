@@ -17,7 +17,7 @@ def _clock(p: Pick) -> str:
 
 def _line(p: Pick, classes: dict[str, AloClass], labels: dict[str, Labels]) -> str:
     if p.status == "no_match" or not p.class_id:
-        return f"* {p.slot}: no match this week, reply more {p.slot}"
+        return f"* {p.slot}: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more {p.slot}"
     c = classes[p.class_id]
     day = p.start.strftime("%a")
     text = f"* {day} {_clock(p)}: {c.title} ({c.mins} min, {equipment_text(c, labels.get(c.id))})"
@@ -66,6 +66,11 @@ def moved(slot: str, new_start, clash_title: str) -> str:
     day = new_start.strftime("%a")
     where = _clock12(new_start) + (f" on {day}" if day != slot else "")
     return f"{slot} moved to {where} (clashes with {clash_title}). Reply undo to put it back."
+
+
+def no_room(slot: str, title: str) -> str:
+    return (f"I couldn't fit {title} on {slot}: there is no free time between 9:00 and 12:00. "
+            f"I've left {slot} as it was. Reply move {slot} HH:MM to choose a time yourself.")
 
 
 def could_not_move(slot: str, clash_title: str) -> str:

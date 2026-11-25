@@ -21,9 +21,9 @@ LAST_WEEK = [replace(p, week=date(2026, 10, 5), start=p.start.replace(day=p.star
 EXPECTED = """Did you do all of last week's classes? Mon ✓ Tue ✓ Wed ✓
 If you missed one, reply "skipped Tue". No reply means you did them all.
 
-* Mon 9:30: Strength Basics (25 min, light weights)
-* Tue 9:30: Hip Opening Flow (20 min, strap)
-* Wed 9:30: Pilates Sculpt (15 min, ball)
+* Mon 10:00: Strength Basics (25 min, light weights)
+* Tue 10:00: Hip Opening Flow (20 min, strap)
+* Wed 10:00: Pilates Sculpt (15 min, ball)
 
 Reply ok, or more Mon / Tue / Wed for alternatives"""
 
@@ -43,18 +43,18 @@ def test_skipped_last_week_is_crossed():
 
 def test_less_sure_and_no_jev_lines():
     text = messages.sunday([], [replace(THREE[0], less_sure=True), *THREE[1:]], CLASSES, LABELS, False)
-    assert "* Mon 9:30: Strength Basics (25 min, light weights) (less sure)" in text
+    assert "* Mon 10:00: Strength Basics (25 min, light weights) (less sure)" in text
     assert text.endswith("\n\nPicked without Jev this week.")
 
 
 def test_moved_to_another_day_is_flagged():
     moved = replace(THREE[2], start=dt(2026, 10, 15))
-    assert "* Thu 9:30: Pilates Sculpt (15 min, ball) (moved from Wed)" in messages.sunday([], [*THREE[:2], moved], CLASSES, LABELS, True)
+    assert "* Thu 10:00: Pilates Sculpt (15 min, ball) (moved from Wed)" in messages.sunday([], [*THREE[:2], moved], CLASSES, LABELS, True)
 
 
 def test_no_match_slot_line():
     nothing = pick(week=WEEK, slot="Tue", start=dt(2026, 10, 13), class_id="", status="no_match")
-    assert "* Tue: no match this week, reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS, True)
+    assert "* Tue: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS, True)
 
 
 def test_equipment_text():
@@ -70,7 +70,7 @@ def test_fixed_texts():
 
 
 def test_updated_lists_the_changed_picks():
-    assert messages.updated([THREE[1]], CLASSES, LABELS) == "Updated:\n* Tue 9:30: Hip Opening Flow (20 min, strap)"
+    assert messages.updated([THREE[1]], CLASSES, LABELS) == "Updated:\n* Tue 10:00: Hip Opening Flow (20 min, strap)"
 
 
 def test_moved_message_formats_times_and_flags_a_day_change():
