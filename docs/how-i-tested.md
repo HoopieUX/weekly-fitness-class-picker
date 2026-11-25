@@ -4,8 +4,7 @@ The picker books real calendar events and messages a real person, so most of the
 wrong in ordinary life. Each situation below names the test file that covers it. Run them all with
 `python -m pytest -q`.
 
-Eight tests need the full private class catalogue or the live sheet, so they skip themselves on a fresh clone.
-Everything else runs with no keys and no network.
+A few tests need my private class catalogue, so they skip themselves on a fresh clone. Everything else runs with no keys and no network.
 
 | # | Situation | What should happen | Tests |
 | --- | --- | --- | --- |

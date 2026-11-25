@@ -48,8 +48,6 @@ class Pick:
     status: str = "proposed"  # proposed / scheduled / done / skipped / no_match
     feedback: str = ""  # "" / like / dislike / too_hard / too_easy
     event_id: str = ""
-    less_sure: bool = False
-    jev_used: bool = True
     requested: bool = False
     prev_start: datetime | None = None
     prev_event_id: str = ""

@@ -81,11 +81,6 @@ def _by_slot(picks: list[Pick]) -> list[Pick]:
     return sorted(picks, key=lambda p: _DAYS.index(p.slot))
 
 
-def _ranker(ctx: _Context, labels: dict[str, Labels]):
-    """Rank from the labels Jev saved. Jev labels each class once, so the weekly run never calls it."""
-    return label_ranker(labels), {"jev": True}
-
-
 def _week_window(week: date) -> tuple[datetime, datetime]:
     start = datetime.combine(week, time(0, 0), tzinfo=TZ)
     return start, start + timedelta(days=5)
@@ -168,10 +163,10 @@ def _place(ctx: _Context, data: _Data, old: Pick | None, new: Pick) -> tuple[Pic
 
 # ---------------------------------------------------------------- weekly runs
 
-def _render_week(data: "_Data", week: date, picks: list[Pick], jev_used: bool) -> str:
+def _render_week(data: "_Data", week: date, picks: list[Pick]) -> str:
     this_week = _by_slot([p for p in picks if p.week == week])
     last_week = _by_slot([p for p in data.picks if p.week == week - timedelta(days=7)])
-    return messages.sunday(last_week, this_week, data.classes, data.labels, jev_used)
+    return messages.sunday(last_week, this_week, data.classes, data.labels)
 
 
 def cmd_sunday(ctx: _Context, force: bool) -> str:
@@ -181,20 +176,19 @@ def cmd_sunday(ctx: _Context, force: bool) -> str:
     week = target_week(now, data.settings)
     existing = [p for p in data.picks if p.week == week]
     if existing and not force:
-        return _render_week(data, week, data.picks, all(p.jev_used for p in existing))
+        return _render_week(data, week, data.picks)
     kept = {p.slot for p in existing if p.status in ("scheduled", "done")}
     ahead = [slot for slot, at in data.settings.slots.items() if slot_start(week, slot, at) > now]
     start, end = _week_window(week)
     busy = _busy(ctx, data.settings, start, end, frozenset(p.event_id for p in existing if p.event_id))
-    ranker, state = _ranker(ctx, data.labels)
     keep = [p for p in existing if p.class_id and (p.slot in kept or p.slot not in ahead)]
-    planned = plan_week(week, data.classes_list, data.labels, data.settings, data.picks, busy, ranker,
+    planned = plan_week(week, data.classes_list, data.labels, data.settings, data.picks, busy, label_ranker(data.labels),
                         today=now.date(), cycle=data.cycle, keep=keep, only=ahead, favourites=data.favourites)
-    store.save_picks([replace(p, jev_used=state["jev"]) for p in planned if p.slot not in kept])
+    store.save_picks([p for p in planned if p.slot not in kept])
     store.save_offers(_PREVIEW, week, [])  # a fresh plan has not been shown yet
     if data.settings.next_week:
         store.save_settings(replace(data.settings, next_week={}))
-    return _render_week(data, week, store.load_picks(), state["jev"])
+    return _render_week(data, week, store.load_picks())
 
 
 def _approve_week(ctx: _Context, week: date) -> tuple[list[Pick], list[str]]:
@@ -259,7 +253,7 @@ def cmd_show(ctx: _Context) -> str:
     week = _active_week(data.picks, ctx.now)
     if week is None:
         return "No classes picked yet. Reply pick to make some."
-    return _render_week(data, week, data.picks, all(p.jev_used for p in data.picks if p.week == week))
+    return _render_week(data, week, data.picks)
 
 
 def cmd_check_ran(ctx: _Context) -> str:
@@ -352,18 +346,17 @@ def _repick(ctx: _Context, week: date, slots: list[str], *, overrides: dict[str,
     keep = [p for s, p in this_week.items() if s not in slots and p.class_id and p.status != "skipped"]
     old = {s: this_week[s] for s in slots if s in this_week}
     settings = replace(data.settings, next_week=_merge(data.settings.next_week, overrides or {}))
-    ranker, state = _ranker(ctx, data.labels)
     start, end = _week_window(week)
     busy = _busy(ctx, data.settings, start, end, frozenset(p.event_id for p in old.values() if p.event_id))
     prefer = {s: focus_of(data.classes[o.class_id], data.labels) for s, o in old.items()
               if prefer_same_focus and o.class_id}
     exclude = frozenset(o.class_id for o in old.values() if o.class_id) if exclude_old else frozenset()
-    planned = plan_week(week, data.classes_list, data.labels, settings, data.picks, busy, ranker,
+    planned = plan_week(week, data.classes_list, data.labels, settings, data.picks, busy, label_ranker(data.labels),
                         today=ctx.now.date(), cycle=data.cycle, keep=keep, only=slots, exclude_ids=exclude,
                         prefer_focus=prefer, favourites=data.favourites)
     result, failures = [], []
     for p in planned:
-        p, failure = _place(ctx, data, old.get(p.slot), replace(p, jev_used=state["jev"]))
+        p, failure = _place(ctx, data, old.get(p.slot), p)
         result.append(p)
         failures += [failure] if failure else []
     return "\n".join([messages.updated(result, data.classes, data.labels), *failures])
@@ -511,9 +504,8 @@ def cmd_more(ctx: _Context, slot: str) -> str:
     week, _, error = _this_week(ctx, data, slot)
     if error or week is None:
         return error or "There are no picks yet. Reply pick to make some."
-    ranker, _ = _ranker(ctx, data.labels)
     current = [p for p in data.picks if p.week == week]
-    found = alternatives(slot, week, data.classes_list, data.labels, data.settings, data.picks, ranker,
+    found = alternatives(slot, week, data.classes_list, data.labels, data.settings, data.picks, label_ranker(data.labels),
                          today=ctx.now.date(), current=current, cycle=data.cycle, favourites=data.favourites)
     if not found:
         return f"No other classes fit {slot}."
@@ -540,8 +532,7 @@ def _put(ctx: _Context, data: _Data, week: date, slot: str, c: AloClass, *, requ
         start = find_same_day(preferred, c.mins, busy)
     if start is None:  # nothing fits between 9:00 and 12:00: leave the slot as it was, and say so
         return messages.no_room(slot, c.title)
-    new = Pick(week=week, slot=slot, start=start, class_id=c.id, requested=requested,
-               jev_used=old.jev_used if old else True)
+    new = Pick(week=week, slot=slot, start=start, class_id=c.id, requested=requested)
     new, failure = _place(ctx, data, old, new)
     return "\n".join([messages.updated([new], data.classes, data.labels), *([failure] if failure else [])])
 

@@ -21,8 +21,6 @@ def _line(p: Pick, classes: dict[str, AloClass], labels: dict[str, Labels]) -> s
     c = classes[p.class_id]
     day = p.start.strftime("%a")
     text = f"* {day} {_clock(p)}: {c.title} ({c.mins} min, {equipment_text(c, labels.get(c.id))})"
-    if p.less_sure:
-        text += " (less sure)"
     if day != p.slot:
         text += f" (moved from {p.slot})"
     return text
@@ -32,8 +30,7 @@ def _mark(p: Pick) -> str:
     return {"skipped": "✗", "no_match": "-", "proposed": "-"}.get(p.status, "✓")
 
 
-def sunday(last_week: list[Pick], picks: list[Pick], classes: dict[str, AloClass], labels: dict[str, Labels],
-           jev_used: bool) -> str:
+def sunday(last_week: list[Pick], picks: list[Pick], classes: dict[str, AloClass], labels: dict[str, Labels]) -> str:
     slots = [p.slot for p in picks]
     parts = []
     if last_week:
@@ -43,8 +40,6 @@ def sunday(last_week: list[Pick], picks: list[Pick], classes: dict[str, AloClass
                      f'If you missed one, reply "skipped {example}". No reply means you did them all.')
     parts.append("\n".join(_line(p, classes, labels) for p in picks))
     parts.append(f"Reply ok, or more {' / '.join(slots)} for alternatives")
-    if not jev_used:
-        parts.append("Picked without Jev this week.")
     return "\n\n".join(parts)
 
 

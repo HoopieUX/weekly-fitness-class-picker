@@ -3,13 +3,12 @@ from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from typing import Callable, Sequence
 
-from weekly_picker.config import LESS_SURE_THRESHOLD
 from weekly_picker.jev import GOALS, MAX_CANDIDATES
 from weekly_picker.models import AloClass, Labels, Pick, Settings
 from weekly_picker.rules import reasons_excluded
 from weekly_picker.timeslots import find_next_weekday, find_same_day, slot_start
 
-Ranker = Callable[[str, list[str], list[AloClass]], dict[str, tuple[float, float]]]
+Ranker = Callable[[str, list[str], list[AloClass]], dict[str, float]]
 _DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 _LOW_ENERGY = 0.5
 _BODY_GOALS = {"strength", "sculpt and tone", "flexibility", "mobility", "cardio"}  # "body area" means little for calm
@@ -38,8 +37,8 @@ def physio_hits(label: Labels) -> set[str]:
 
 
 def label_ranker(labels: dict[str, Labels]) -> Ranker:
-    """Fallback ranking from the saved labels alone, used when Jev is unavailable."""
-    return lambda goal, modifiers, candidates: {c.id: (labels[c.id].goal_probs.get(goal, 0.0), 1.0) for c in candidates}
+    """Rank from the labels Jev saved: how likely each class is to serve the goal."""
+    return lambda goal, modifiers, candidates: {c.id: labels[c.id].goal_probs.get(goal, 0.0) for c in candidates}
 
 
 @dataclass(frozen=True)
@@ -113,7 +112,7 @@ def _ranked(pool, mods, classes, labels, settings, history, ranker, today, cover
     def favourite(c):
         return _FAVOURITE_BONUS if c.id in favourites else 0.0
 
-    # the shortlist Jev ranks: best goal match first, with the physio nudge so strong physio classes make the cut
+    # the shortlist: best goal match first, with the physio nudge so strong physio classes make the cut
     pool = sorted(pool, key=lambda c: (-(labels[c.id].goal_probs.get(mods.goal, 0.0) + physio(c) + favourite(c)), c.id))
     pool = pool[:MAX_CANDIDATES]
     if not pool:
@@ -130,8 +129,7 @@ def _ranked(pool, mods, classes, labels, settings, history, ranker, today, cover
             last_done[f] = max(last_done.get(f, date.min), p.start.date())
     scored = []
     for c in pool:
-        fit, confidence = fits.get(c.id, (0.0, 0.0))
-        score = fit
+        score = fits.get(c.id, 0.0)
         liked = 0.15 if c.id in liked_ids or c.instructor in liked_instructors else 0.0
         score += max(liked, favourite(c))  # liked and favourite do not stack, so the day's goal stays in charge
         seen = last_done.get(_focus(c, labels))
@@ -139,14 +137,14 @@ def _ranked(pool, mods, classes, labels, settings, history, ranker, today, cover
         score += physio(c)
         if mods.goal == "strength":
             score -= 0.1 * abs(labels[c.id].strength - settings.preferred_strength)
-        scored.append((score, confidence, c))
-    scored.sort(key=lambda t: (-t[0], t[2].id))
+        scored.append((score, c))
+    scored.sort(key=lambda t: (-t[0], t[1].id))
     return scored
 
 
 def plan_week(
     week: date, classes: list[AloClass], labels: dict[str, Labels], settings: Settings, history: list[Pick],
-    busy, ranker: Ranker, *, today: date, jev_used: bool = True, cycle: Sequence[date] = (),
+    busy, ranker: Ranker, *, today: date, cycle: Sequence[date] = (),
     keep: Sequence[Pick] = (), only: Sequence[str] | None = None, exclude_ids: frozenset[str] = frozenset(),
     prefer_focus: dict[str, str] | None = None, favourites: frozenset[str] = frozenset(),
 ) -> list[Pick]:
@@ -190,8 +188,8 @@ def plan_week(
             ranked = _ranked(pool, mods, classes, labels, settings, history, ranker, today, frozenset(covered),
                              favourites)
             if slot in prefer_focus:
-                ranked.sort(key=lambda t: _focus(t[2], labels) != prefer_focus[slot])  # stable: keeps the score order
-            for _, confidence, c in ranked:
+                ranked.sort(key=lambda t: _focus(t[1], labels) != prefer_focus[slot])  # stable: keeps the score order
+            for _, c in ranked:
                 same_area = mods.goal in _BODY_GOALS and _focus(c, labels) in used_focus
                 if level < 2 and (same_area or (c.instructor and c.instructor in used_instructors)):
                     continue
@@ -200,22 +198,21 @@ def plan_week(
                     preferred, at, c.mins, blocked, kept_days | {p.start.date() for p in picks if p.status == "proposed"})
                 if start is None:  # no free time for this one (a long favourite, say): try the next class
                     continue
-                chosen = (c, confidence, start)
+                chosen = (c, start)
                 break
             if chosen:
                 break
         if not chosen:
-            picks.append(Pick(week=week, slot=slot, start=preferred, class_id="", status="no_match", jev_used=jev_used))
+            picks.append(Pick(week=week, slot=slot, start=preferred, class_id="", status="no_match"))
             continue
-        c, confidence, start = chosen
+        c, start = chosen
         placed.append((start, start + timedelta(minutes=c.mins)))
         used_focus.add(_focus(c, labels))
         used_ids.add(c.id)
         covered |= physio_hits(labels[c.id])
         if c.instructor:
             used_instructors.add(c.instructor)
-        picks.append(Pick(week=week, slot=slot, start=start, class_id=c.id, less_sure=confidence < LESS_SURE_THRESHOLD,
-                          jev_used=jev_used))
+        picks.append(Pick(week=week, slot=slot, start=start, class_id=c.id))
     return picks
 
 
@@ -236,4 +233,4 @@ def alternatives(
         ranked = _ranked(pool, mods, classes, labels, settings, history, ranker, today, covered, favourites)
         if len(ranked) >= n:
             break
-    return [c for _, _, c in ranked[:n]]
+    return [c for _, c in ranked[:n]]

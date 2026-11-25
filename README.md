@@ -4,6 +4,8 @@
 
 Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once and saves the result; after that, plain code does the weekly work.
 
+> This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync.
+
 <!-- IMAGE: GIF of WhatsApp message to approval to calendar, or remove and use the stills below -->
 
 ## Why I built it
@@ -48,7 +50,14 @@ flowchart TD
     N --> A
 ```
 
-Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks never ran; anything I have not replied to goes into the calendar automatically at 23:00 on Sunday, but only if the preview was actually delivered; clash checks every 30 minutes from 07:00 to 21:30. Classes are only ever placed between 09:00 and 12:00, preferably starting at 10:00, otherwise at the nearest free 15-minute slot; if nothing fits, the class is left out and the message says so. The days and goals are my settings (Monday to Thursday), and the run times live in the scheduler, not in this code.
+| When | What happens |
+| --- | --- |
+| Sunday 18:00 | Picks are made and sent as a preview |
+| Sunday 19:00 | A check tells me if the picks never ran |
+| Sunday 23:00 | No reply counts as approval: the classes go into the calendar, but only if the preview was delivered |
+| Every 30 minutes, 07:00 to 21:30 | Clash check: a booked class moves if a new event lands on it |
+
+Classes are only placed between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15 minutes. If nothing fits, the class is left out and the message says so. The days and goals are my settings, and the run times live in the scheduler, not in this code.
 
 ## Code map
 
@@ -69,8 +78,8 @@ Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks
 | `weekly_picker/store.py` | The only file that touches storage |
 | `weekly_picker/timeslots.py` | Free-time maths: nearest free slot, next free weekday |
 | `scripts/demo.py` | Plans one week from the sample and prints the picks |
-| `scripts/pick_classes.py` | Chooses the sample classes (all three goals, a spread of lengths) and exports a numbered extract with no IDs, links or instructors |
-| `scripts/make_sample.py` | How the sample was built: picks rows, swaps real IDs for demo IDs, drops links and instructors |
+| `scripts/pick_classes.py` | Chooses the sample classes and exports a numbered extract with no IDs, links or instructors |
+| `scripts/make_sample.py` | Builds the sample: swaps real IDs for demo IDs, drops links and instructors |
 
 ## How I use it
 
@@ -81,17 +90,15 @@ Run times: picks at 18:00 on Sunday; a check at 19:00 that tells me if the picks
 
 ## Running it with an agent
 
-It is a plain command-line tool, so any agent that can run commands can drive it. I use Instinct on WhatsApp. Muse and Claude Code also work.
-
-Built with Claude Code; I now talk to it through Instinct on WhatsApp.
+It is a plain command-line tool, so any agent that can run commands can drive it. Built with Claude Code; I now talk to it through Instinct on WhatsApp. Muse and Claude Code also work.
 
 Instinct reads this repo for the code. Agents should start with [docs/for-agents.md](docs/for-agents.md): the weekly schedule and which command each reply maps to.
 
-With Claude Code, the weekly booking only needs Haiku. Jev has already done the hard thinking by labelling every class once, so the agent is only running commands and passing on my replies. A lower-level model is the right one for that.
+With Claude Code, the weekly booking only needs Haiku. Jev has already done the hard thinking by labelling every class once, so the agent only runs commands and passes on my replies. A lower-level model is the right one for that.
 
 ## Try the sample
 
-The sample is 20 to 30 classes with made-up names and descriptions rewritten in fresh words. Lengths, difficulty, equipment and focus are unchanged. There are no links and no instructor names, and the class IDs are demo IDs (`C-001` onwards). The labels came from Jev reading the real classes and were carried over to the renamed ones.
+The sample is 20 to 30 classes with made-up names and rewritten descriptions. Lengths, difficulty, equipment and focus are unchanged. There are no links or instructor names, and the IDs are demo IDs (`C-001` onwards). The labels came from Jev reading the real classes and were carried over to the renamed ones.
 
 ```bash
 python3 -m venv .venv
@@ -105,18 +112,14 @@ python3 -m venv .venv
 .venv/bin/python scripts/demo.py
 ```
 
-No Google account and no Jev key needed. The demo ranks from Jev's saved labels, and so does the live version: Jev labels each class once, and only labels again if my parameters change or I add new classes.
+No Google account and no Jev key needed. The live version ranks the same way, from Jev's saved labels: Jev only labels again if my parameters change or I add new classes.
 
 ## How it was tested
 
-The test suite runs on every push (see the badge). A few tests need the private catalogue or my live sheet, so they skip on a fresh clone. The situations they cover are in [docs/how-i-tested.md](docs/how-i-tested.md). The design and the decisions behind it are in [docs/design.md](docs/design.md) and [docs/decisions.md](docs/decisions.md).
+The tests run on every push (see the badge); a few need my private catalogue and skip on a fresh clone. The situations they cover are in [docs/how-i-tested.md](docs/how-i-tested.md). The design and the decisions behind it are in [docs/design.md](docs/design.md) and [docs/decisions.md](docs/decisions.md).
 
 ## What's next
 
 - Images and a short walkthrough of a real week.
 - A command to relabel only the classes affected when I change a parameter.
 - Moving storage from Google Sheets to a database, which only means rewriting `store.py`.
-
-## A note on this repo
-
-This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync.

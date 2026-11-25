@@ -29,32 +29,26 @@ Reply ok, or more Mon / Tue / Wed for alternatives"""
 
 
 def test_sunday_message_exact():
-    assert messages.sunday(LAST_WEEK, THREE, CLASSES, LABELS, True) == EXPECTED
+    assert messages.sunday(LAST_WEEK, THREE, CLASSES, LABELS) == EXPECTED
 
 
 def test_no_last_week_means_no_first_line():
-    assert messages.sunday([], THREE, CLASSES, LABELS, True) == EXPECTED.split("\n\n", 1)[1]
+    assert messages.sunday([], THREE, CLASSES, LABELS) == EXPECTED.split("\n\n", 1)[1]
 
 
 def test_skipped_last_week_is_crossed():
     last = [replace(LAST_WEEK[0]), replace(LAST_WEEK[1], status="skipped"), replace(LAST_WEEK[2])]
-    assert messages.sunday(last, THREE, CLASSES, LABELS, True).startswith("Did you do all of last week's classes? Mon ✓ Tue ✗ Wed ✓")
-
-
-def test_less_sure_and_no_jev_lines():
-    text = messages.sunday([], [replace(THREE[0], less_sure=True), *THREE[1:]], CLASSES, LABELS, False)
-    assert "* Mon 10:00: Strength Basics (25 min, light weights) (less sure)" in text
-    assert text.endswith("\n\nPicked without Jev this week.")
+    assert messages.sunday(last, THREE, CLASSES, LABELS).startswith("Did you do all of last week's classes? Mon ✓ Tue ✗ Wed ✓")
 
 
 def test_moved_to_another_day_is_flagged():
     moved = replace(THREE[2], start=dt(2026, 10, 15))
-    assert "* Thu 10:00: Pilates Sculpt (15 min, ball) (moved from Wed)" in messages.sunday([], [*THREE[:2], moved], CLASSES, LABELS, True)
+    assert "* Thu 10:00: Pilates Sculpt (15 min, ball) (moved from Wed)" in messages.sunday([], [*THREE[:2], moved], CLASSES, LABELS)
 
 
 def test_no_match_slot_line():
     nothing = pick(week=WEEK, slot="Tue", start=dt(2026, 10, 13), class_id="", status="no_match")
-    assert "* Tue: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS, True)
+    assert "* Tue: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS)
 
 
 def test_equipment_text():
@@ -90,4 +84,4 @@ def test_could_not_move_message():
 
 def test_a_class_that_was_never_added_is_not_ticked():
     last = [replace(LAST_WEEK[0], status="proposed"), LAST_WEEK[1], replace(LAST_WEEK[2], status="scheduled")]
-    assert messages.sunday(last, THREE, CLASSES, LABELS, True).startswith("Did you do all of last week's classes? Mon - Tue ✓ Wed ✓")
+    assert messages.sunday(last, THREE, CLASSES, LABELS).startswith("Did you do all of last week's classes? Mon - Tue ✓ Wed ✓")

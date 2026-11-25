@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date, time
+from datetime import time
 
 import pytest
 
@@ -110,7 +110,7 @@ def test_remove_slot_keeps_at_least_one_and_knows_its_slots(env):
 
 
 def test_settings_remember_extra_days():
-    from tests.test_store import InMemoryStore, SheetsStore, MemoryGrid  # noqa: F401  (contract tested in test_store)
+    from weekly_picker.store import MemoryGrid, SheetsStore
     s = replace(Settings.default(), extra_days={"Thu": "2026-10-16"})
     assert SheetsStore.initialise(MemoryGrid(), [], s).load_settings() == s
 

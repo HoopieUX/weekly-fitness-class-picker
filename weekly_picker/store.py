@@ -92,7 +92,7 @@ class InMemoryStore:
 CLASS_COLS = ["id", "title", "mins", "difficulty", "intensity", "style", "categories", "equipment",
               "focus", "description", "url", "instructor"]
 LABEL_COLS = ["class_id", "title", "main_goal", "goal_probs", "strength", "weight_needed", "low_energy", "focus", "physio", "physio_feel"]
-PICK_COLS = ["week", "slot", "start", "class_id", "status", "feedback", "event_id", "less_sure", "jev_used",
+PICK_COLS = ["week", "slot", "start", "class_id", "status", "feedback", "event_id",
              "requested", "prev_start", "prev_event_id"]
 OFFER_COLS = ["week", "slot", "class_ids"]
 FAV_COLS = ["class_id", "title", "added", "note"]
@@ -146,16 +146,14 @@ def _row_to_label(r: list[str]) -> Labels:
 
 def _pick_to_row(p: Pick) -> list[str]:
     return [p.week.isoformat(), p.slot, p.start.isoformat(), p.class_id, p.status, p.feedback, p.event_id,
-            str(p.less_sure).upper(), str(p.jev_used).upper(), str(p.requested).upper(),
-            p.prev_start.isoformat() if p.prev_start else "", p.prev_event_id]
+            str(p.requested).upper(), p.prev_start.isoformat() if p.prev_start else "", p.prev_event_id]
 
 
 def _row_to_pick(r: list[str]) -> Pick:
     return Pick(
         week=date.fromisoformat(r[0]), slot=r[1], start=datetime.fromisoformat(r[2]).astimezone(TZ),
-        class_id=r[3], status=r[4], feedback=r[5], event_id=r[6], less_sure=_bool(r[7]), jev_used=_bool(r[8]),
-        requested=_bool(r[9]), prev_start=datetime.fromisoformat(r[10]).astimezone(TZ) if r[10] else None,
-        prev_event_id=r[11],
+        class_id=r[3], status=r[4], feedback=r[5], event_id=r[6], requested=_bool(r[7]),
+        prev_start=datetime.fromisoformat(r[8]).astimezone(TZ) if r[8] else None, prev_event_id=r[9],
     )
 
 

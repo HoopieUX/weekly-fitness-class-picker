@@ -6,8 +6,8 @@ from tests.helpers import dt, lab, pick
 from tests.world import WEEK
 
 
-def constant_ranker(fit: float, confidence: float):
-    return lambda goal, modifiers, candidates: {c.id: (fit, confidence) for c in candidates}
+def constant_ranker(fit: float):
+    return lambda goal, modifiers, candidates: {c.id: fit for c in candidates}
 
 
 def test_one_pick_per_slot_with_slot_goals(world):
@@ -28,7 +28,7 @@ def test_full_body_is_allowed_once_but_relaxed_when_nothing_else_fits(world):
     for goal in ("strength", "flexibility", "sculpt and tone"):
         world.keep_goal_focuses(goal, ("full body", "core"))
     prefers_full_body = lambda goal, mods, cands: {  # noqa: E731
-        c.id: ((0.95 if c.focus == "full body" else 0.5), 0.9) for c in cands}
+        c.id: (0.95 if c.focus == "full body" else 0.5) for c in cands}
     picks = plan_week(**world.args(ranker=prefers_full_body))
     assert [world.focus_of(p) for p in picks[:2]] == ["full body", "core"]
     assert [p.status for p in picks] == ["proposed"] * 3  # Wednesday relaxes the focus rule rather than failing
@@ -45,15 +45,6 @@ def test_empty_pool_relaxes_repeats_then_no_match(world):
     world.remove_goal("strength")
     mon = plan_week(**world.args())[0]
     assert mon.status == "no_match" and mon.class_id == "" and mon.start == dt(2026, 10, 12)
-
-
-def test_less_sure_flag_follows_confidence(world):
-    assert all(p.less_sure for p in plan_week(**world.args(ranker=constant_ranker(0.9, 0.5))))
-    assert not any(p.less_sure for p in plan_week(**world.args(ranker=constant_ranker(0.9, 0.95))))
-
-
-def test_jev_used_flag_is_recorded(world):
-    assert not any(p.jev_used for p in plan_week(**world.args(jev_used=False)))
 
 
 def test_clash_moves_same_day_to_the_nearest_free_time(world):
@@ -124,7 +115,7 @@ def test_alternatives_are_distinct_and_skip_current_picks(world):
 
 def test_label_ranker_scores_by_goal_probability(world):
     ranked = label_ranker(world.labels)("strength", [], world.classes[:2])
-    assert ranked[world.classes[0].id] == (0.9, 1.0)
+    assert ranked[world.classes[0].id] == 0.9
 
 
 def test_only_and_keep_replan_just_the_missing_slot(world):
@@ -175,7 +166,7 @@ def test_physio_bonus_rewards_the_best_area_the_week_has_not_covered():
 
 
 def test_physio_work_tips_an_even_choice_and_the_week_spreads_across_areas(world):
-    picks = plan_week(**world.args(ranker=constant_ranker(0.5, 0.9)))
+    picks = plan_week(**world.args(ranker=constant_ranker(0.5)))
     others = [c.id for c in world.classes if c.id not in (picks[0].class_id, picks[1].class_id)]
     # give every class the same side-bend score, and one Tuesday-eligible other class balance too
     for cid in world.labels:
@@ -183,7 +174,7 @@ def test_physio_work_tips_an_even_choice_and_the_week_spreads_across_areas(world
     tue_pool = [cid for cid in others if world.labels[cid].main_goal == "flexibility"]
     target = tue_pool[-1]
     world.labels[target] = replace(world.labels[target], physio={"side_bend": 0.9, "balance": 0.95})
-    picks = plan_week(**world.args(ranker=constant_ranker(0.5, 0.9)))
+    picks = plan_week(**world.args(ranker=constant_ranker(0.5)))
     assert picks[1].class_id == target
 
 
@@ -206,14 +197,14 @@ def test_feeling_like_physio_adds_a_nudge():
 
 
 def test_no_physio_next_week_turns_the_nudge_off(world):
-    picks = plan_week(**world.args(ranker=constant_ranker(0.5, 0.9)))
+    picks = plan_week(**world.args(ranker=constant_ranker(0.5)))
     tue = picks[1].class_id
     tue_pool = [cid for cid in world.labels if world.labels[cid].main_goal == "flexibility" and cid != tue]
     target = tue_pool[-1]
     world.labels[target] = replace(world.labels[target], physio={"balance": 0.95}, physio_feel=1.0)
-    assert plan_week(**world.args(ranker=constant_ranker(0.5, 0.9)))[1].class_id == target
+    assert plan_week(**world.args(ranker=constant_ranker(0.5)))[1].class_id == target
     world.settings = replace(world.settings, next_week={"all": "no physio"})
-    assert plan_week(**world.args(ranker=constant_ranker(0.5, 0.9)))[1].class_id == tue
+    assert plan_week(**world.args(ranker=constant_ranker(0.5)))[1].class_id == tue
 
 
 def test_a_strong_physio_class_makes_the_40_class_shortlist(world):
@@ -223,7 +214,7 @@ def test_a_strong_physio_class_makes_the_40_class_shortlist(world):
     labels = {c.id: lab(class_id=c.id, main_goal="flexibility", goal_probs={"flexibility": 0.95}) for c in classes}
     labels["f40"] = replace(labels["f40"], physio={"side_bend": 0.95}, physio_feel=0.6)  # 41st by id
     seen = []
-    ranker = lambda goal, mods, cands: seen.extend(c.id for c in cands) or {c.id: (0.5, 0.9) for c in cands}  # noqa: E731
+    ranker = lambda goal, mods, cands: seen.extend(c.id for c in cands) or {c.id: 0.5 for c in cands}  # noqa: E731
     _ranked(classes, _Mods("flexibility"), classes, labels, world.settings, [], ranker, WEEK)
     assert "f40" in seen and len(seen) == 40
 
@@ -234,10 +225,10 @@ def test_a_favourite_wins_an_even_choice_and_makes_the_shortlist(world):
     classes = [cls(id=f"f{i:02d}", focus="core") for i in range(41)]
     labels = {c.id: lab(class_id=c.id, main_goal="flexibility", goal_probs={"flexibility": 0.95}) for c in classes}
     seen = []
-    ranker = lambda goal, mods, cands: seen.extend(c.id for c in cands) or {c.id: (0.5, 0.9) for c in cands}  # noqa: E731
+    ranker = lambda goal, mods, cands: seen.extend(c.id for c in cands) or {c.id: 0.5 for c in cands}  # noqa: E731
     ranked = _ranked(classes, _Mods("flexibility"), classes, labels, world.settings, [], ranker, WEEK,
                      favourites=frozenset({"f40"}))  # 41st by id, so it would miss the 40 without the favourite
-    assert "f40" in seen and ranked[0][2].id == "f40"
+    assert "f40" in seen and ranked[0][1].id == "f40"
 
 
 def test_a_favourite_can_be_longer_than_the_length_limit(world):

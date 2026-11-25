@@ -29,20 +29,7 @@ consistently. No pure cardio unless asked for.
 
 Code owns the weekly run. The agent owns the conversation. Jev never talks to the user; code reads its answers.
 
-## Parts
-
-| Part | Job |
-| --- | --- |
-| Catalogue | All classes, plus Jev's labels in their own tab |
-| Settings | Slots, slot goals, equipment, length range, allowed styles, low-energy days |
-| History | Every pick, its status and feedback |
-| Cycle (optional) | Period start dates, if the feature is used |
-| Labeller | Asks Jev about every class once, and again only when a question changes or new classes are added |
-| Weekly picker | Filters, ranks, checks the calendar, writes proposed picks |
-| Clash checker | Every 30 minutes through the day, moves a class if a new event lands on it |
-| Chat agent | Sends and reads messages, runs the picker's commands |
-
-Only one file (`store.py`) touches storage, so moving from Google Sheets to a database means rewriting that one file.
+Only one file (`store.py`) touches storage, so moving from Google Sheets to a database means rewriting that one file. The files and what each does are in the README's code map.
 
 ## Jev's labels
 

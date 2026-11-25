@@ -19,7 +19,7 @@ def run_demo(sample_dir: Path, week: date, today: date) -> str:
     classes, labels, settings = store.load_classes(), store.load_labels(), store.load_settings()
     by_id = {c.id: c for c in classes}
     picks = plan_week(
-        week, classes, labels, settings, store.load_picks(), [], label_ranker(labels), today=today, jev_used=False,
+        week, classes, labels, settings, store.load_picks(), [], label_ranker(labels), today=today,
         cycle=store.load_cycle(), favourites=frozenset(f.class_id for f in store.load_favourites()),
     )
     lines = [f"Week of {week:%d/%m/%Y}", ""]

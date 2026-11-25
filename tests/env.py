@@ -6,7 +6,7 @@ from weekly_picker.config import TZ
 from weekly_picker.gcal import BusyEvent
 from weekly_picker.models import AloClass
 from weekly_picker.store import InMemoryStore
-from tests.helpers import cls, lab
+from tests.helpers import lab
 from tests.world import WEEK, World
 
 

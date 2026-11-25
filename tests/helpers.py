@@ -1,5 +1,5 @@
 from dataclasses import replace
-from datetime import date, datetime, time
+from datetime import date, datetime
 
 from weekly_picker.config import TZ
 from weekly_picker.models import AloClass, Labels, Pick, Settings

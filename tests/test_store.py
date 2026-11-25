@@ -58,7 +58,7 @@ def test_picks_upsert_by_week_and_slot(store):
 
 def test_picks_round_trip_all_fields(store):
     p = pick(week=date(2026, 10, 12), slot="Tue", start=dt(2026, 10, 13), class_id="2", status="scheduled",
-             feedback="like", event_id="evt1", less_sure=True, jev_used=False, requested=True,
+             feedback="like", event_id="evt1", requested=True,
              prev_start=dt(2026, 10, 13, 8, 0), prev_event_id="evt0")
     store.save_picks([p])
     assert store.load_picks() == [p]
