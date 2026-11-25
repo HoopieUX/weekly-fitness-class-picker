@@ -85,6 +85,8 @@ It is a plain command-line tool, so any agent that can run commands can drive it
 
 Built with Claude Code; I now talk to it through Instinct on WhatsApp.
 
+Instinct reads this repo for the code. Agents should start with [docs/for-agents.md](docs/for-agents.md): the weekly schedule and which command each reply maps to.
+
 With Claude Code, the weekly booking only needs Haiku. Jev has already made the judgements, so the agent is only running commands and passing on my replies. The cheapest model that can do that reliably is the right one.
 
 ## Try the sample
