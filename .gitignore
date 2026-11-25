@@ -1,0 +1,10 @@
+.env
+.venv/
+__pycache__/
+.pytest_cache/
+.superpowers/
+alo-scoring/
+.DS_Store
+.alo.lock
+private/
+*.mapping.csv

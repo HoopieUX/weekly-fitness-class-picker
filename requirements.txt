@@ -1,0 +1,5 @@
+typesafe-sdk
+google-api-python-client
+google-auth
+python-dotenv
+pytest
