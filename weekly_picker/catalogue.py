@@ -48,8 +48,8 @@ def _intensity(raw: str) -> int | None:
     return int(raw) if raw.isdigit() else None
 
 
-def load_csv(path: Path) -> list[AloClass]:
-    with open(path, newline="", encoding="utf-8") as f:
+def load_csv(path: Path, encoding: str = "utf-8") -> list[AloClass]:
+    with open(path, newline="", encoding=encoding) as f:
         return [
             AloClass(
                 id=row["id"],
