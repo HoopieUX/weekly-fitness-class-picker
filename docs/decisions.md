@@ -19,16 +19,19 @@ The main calls I made while building, each with what it costs if wrong.
 
 - **Plain rules sit under the labels.** Cardio cut-off, heavy weights, partner workouts, disliked classes and the
   four-week repeat window are code, not a model's opinion. Cost if wrong: a rule is too blunt.
-- **No reply means yes, but only if I saw the preview.** The picker cannot see WhatsApp, so the agent runs
-  `delivered` after sending it, and the 23:00 auto-add checks for that. If it is missing, nothing is added and the
-  message says why. A new plan clears the mark. Cost if wrong: if the agent forgets `delivered`, I say "ok" myself.
+- **No reply means yes, but only if I saw the preview and have not answered it.** The picker cannot see WhatsApp, so
+  the agent runs `preview-sent` after sending it, and the 23:00 auto-add checks for that. A `no`, or any change to
+  the week after the preview (a swap, a skip, a move, a new pick), stops the auto-add; just asking for options does
+  not, and tweaks made before the preview was sent do not count. Each time, nothing is added and the message says
+  why, and a later "ok" still works. It does nothing before 23:00 on a Sunday. Cost if wrong: if the agent forgets
+  `preview-sent`, I say "ok" myself.
 - **Auto-add uses the same week as "ok".** The first version looked at "this week", which at 23:00 on Sunday is the
   week that is ending, so it would have added nothing and said nothing. Found while moving the job from Monday
   morning to Sunday night.
-- **Classes are only placed between 09:00 and 12:00, preferably at 10:00.** Otherwise the nearest free 15 minutes. If
-  nothing fits, the class is left out and the message says so; a swap that cannot fit leaves the slot as it was.
-  A time I choose myself ("move Tue to 14:00") is respected. Cost if wrong: a busy morning leaves a gap instead of
-  moving a class to the afternoon.
+- **Classes are only placed between 09:00 and 12:00, preferably at 10:00, and never on another day.** Otherwise the
+  nearest free 15 minutes that day. The per-day times in the settings no longer set the start. If nothing fits, the
+  class is left out and the message says so; a swap that cannot fit leaves the slot as it was. A time I choose myself
+  ("move Tue to 14:00") is respected. Cost if wrong: a busy morning leaves a gap instead of moving a class.
 - **A failed write never wipes saved rows.** New rows land first, then only the leftover tail is cleared.
 - **Bad input gets a one-line answer,** so a typo never looks like the picker went quiet.
 - **Undo is real.** Clash moves, "ok" and the auto-add can all be reversed. Cost if wrong: undo after "choose" or

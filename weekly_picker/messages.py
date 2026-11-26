@@ -16,8 +16,10 @@ def _clock(p: Pick) -> str:
 
 
 def _line(p: Pick, classes: dict[str, AloClass], labels: dict[str, Labels]) -> str:
+    if p.status == "no_time":
+        return f"* {p.slot}: no free time between 9:00 and 12:00, so no class this week"
     if p.status == "no_match" or not p.class_id:
-        return f"* {p.slot}: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more {p.slot}"
+        return f"* {p.slot}: no match this week, reply more {p.slot}"
     c = classes[p.class_id]
     day = p.start.strftime("%a")
     text = f"* {day} {_clock(p)}: {c.title} ({c.mins} min, {equipment_text(c, labels.get(c.id))})"
@@ -27,7 +29,7 @@ def _line(p: Pick, classes: dict[str, AloClass], labels: dict[str, Labels]) -> s
 
 
 def _mark(p: Pick) -> str:
-    return {"skipped": "✗", "no_match": "-", "proposed": "-"}.get(p.status, "✓")
+    return {"skipped": "✗", "no_match": "-", "no_time": "-", "proposed": "-"}.get(p.status, "✓")
 
 
 def sunday(last_week: list[Pick], picks: list[Pick], classes: dict[str, AloClass], labels: dict[str, Labels]) -> str:
@@ -63,13 +65,8 @@ def moved(slot: str, new_start, clash_title: str) -> str:
     return f"{slot} moved to {where} (clashes with {clash_title}). Reply undo to put it back."
 
 
-def no_room(slot: str, title: str) -> str:
-    return (f"I couldn't fit {title} on {slot}: there is no free time between 9:00 and 12:00. "
-            f"I've left {slot} as it was. Reply move {slot} HH:MM to choose a time yourself.")
-
-
 def could_not_move(slot: str, clash_title: str) -> str:
-    return (f"{slot} clashes with {clash_title} and I couldn't find another time this week. "
+    return (f"{slot} clashes with {clash_title} and I couldn't find another time between 9:00 and 12:00 that day. "
             f"Reply move {slot} HH:MM to choose one.")
 
 
@@ -77,9 +74,20 @@ def autoadded() -> str:
     return "Added this week's classes, reply undo to remove."
 
 
-def not_previewed() -> str:
-    return ("I haven't added this week's classes because I can't confirm the preview reached you. "
-            "Reply show to see them, then ok to add them.")
+def declined() -> str:
+    return "Okay, I won't add this week's classes. Reply ok if you change your mind, or more <day> to swap one."
+
+
+def replied_so_not_added() -> str:
+    return "You replied to this week's preview, so I haven't added anything. Reply ok when you're happy with the picks."
+
+
+def not_delivered() -> str:
+    return "This week's preview wasn't delivered, so I haven't added your classes. Reply show to see them, then ok."
+
+
+def could_not_place(slot: str, title: str) -> str:
+    return f"{title} doesn't fit between 9:00 and 12:00 on {slot}, so I haven't added it."
 
 
 def not_run() -> str:

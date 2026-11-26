@@ -8,3 +8,5 @@ REPEAT_DAYS = 28
 PLACE_EARLIEST = time(9, 0)
 PLACE_LATEST_END = time(12, 0)
 PLACE_PREFERRED = time(10, 0)
+# On Sunday, auto-add only runs from this time: no reply to the preview by then counts as approval.
+AUTOADD_FROM = time(23, 0)

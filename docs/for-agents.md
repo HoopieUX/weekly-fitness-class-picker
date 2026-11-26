@@ -8,8 +8,8 @@ If you are an agent (Instinct, Muse, Claude Code, Codex, Grok or something else)
 - **An empty output means say nothing.** Silence is correct (for example, auto-add with nothing to add).
 - Send the output as it is. Do not reword it, and do not invent commands. If the user's message does not fit a
   command, ask them to say it another way.
-- Never run `delivered` unless the preview message really was delivered. It is what allows the 23:00 auto-add.
-- Classes are placed between 09:00 and 12:00 only. A class that does not fit is left out and the output says so; pass that on.
+- Never run `preview-sent` unless the preview message really was delivered. It is what allows the 23:00 auto-add.
+- Classes are placed between 09:00 and 12:00 only, at 10:00 if free. A class that does not fit is left out, never moved to another day, and the output says so; pass that on.
 - Commands queue behind a lock, so it is safe to run two at once.
 - Credentials and the live Sheet ID are kept outside the repo. Never write them into a file or a message.
 - The code in this repo is the code that runs. The sample in `sample/` is only for trying it with no accounts.
@@ -18,10 +18,10 @@ If you are an agent (Instinct, Muse, Claude Code, Codex, Grok or something else)
 
 | When | Run | What it does |
 | --- | --- | --- |
-| Sunday 20:00 | `sunday` | Picks a class for each slot (Monday to Thursday) and prints the preview. Send it, then run `delivered` |
-| Right after the preview is sent | `delivered` | Records that the preview reached the user. Silent. Run it only once delivery is confirmed |
+| Sunday 20:00 | `sunday` | Picks a class for each slot (Monday to Thursday) and prints the preview. Send it, then run `preview-sent` |
+| Right after the preview is sent | `preview-sent` | Records that the preview reached the user. Silent. Run it only once delivery is confirmed |
 | Sunday 21:00 | `check-ran` | Says so if the 20:00 job never produced picks; silent otherwise |
-| Sunday 23:00 | `autoadd` | No reply counts as approval: adds anything still only proposed, but only if `delivered` was run. If it was not, it adds nothing and says so. Silent if nothing is waiting |
+| Sunday 23:00 | `autoadd` | No reply counts as approval: adds anything still only proposed. It does nothing before 23:00 on a Sunday. It adds nothing, and says why, if `preview-sent` was not run or if the user said `no` or changed the week after the preview. Silent if nothing is waiting |
 | Every 30 minutes, 07:00 to 21:30 | `clash-check` | Moves a booked class if a new event lands on it; silent when nothing clashes |
 
 ## Replies to commands
@@ -29,6 +29,7 @@ If you are an agent (Instinct, Muse, Claude Code, Codex, Grok or something else)
 | The user says | Run |
 | --- | --- |
 | "ok" | `approve` |
+| "no", "don't add them" | `no` (stops the 23:00 auto-add; `ok` later still works) |
 | "undo" | `undo` |
 | "show", "what's this week" | `show` |
 | "more Tue" | `more Tue`, then `choose Tue <number>` when they pick one |

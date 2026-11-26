@@ -45,7 +45,7 @@ class Pick:
     slot: str  # "Mon" / "Tue" / "Wed"
     start: datetime  # timezone-aware
     class_id: str
-    status: str = "proposed"  # proposed / scheduled / done / skipped / no_match
+    status: str = "proposed"  # proposed / scheduled / done / skipped / no_match / no_time
     feedback: str = ""  # "" / like / dislike / too_hard / too_easy
     event_id: str = ""
     requested: bool = False
@@ -75,6 +75,8 @@ class Settings:
     extra_days: dict[str, str] = field(default_factory=dict)  # temporary slots: day -> last date they exist
     # calendar events whose title starts with one of these words are reminders, so they never block a class
     ignore_titles: list[str] = field(default_factory=lambda: ["message", "remind"])
+    preview_sent: str = ""  # the Monday (YYYY-MM-DD) of the week whose Sunday preview the agent confirmed delivering
+    preview_replied: str = ""  # the Monday of a week whose delivered preview I answered with "no" or a change
 
     @staticmethod
     def default() -> "Settings":

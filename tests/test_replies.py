@@ -17,7 +17,7 @@ def goal_of(env, p):
 
 
 def test_undo_after_autoadd(env):
-    env.run("sunday"); env.run("delivered"); env.at("2026-10-12 08:00"); env.run("autoadd")
+    env.run("sunday"); env.run("preview-sent"); env.at("2026-10-12 08:00"); env.run("autoadd")
     assert env.calendar.live == 3
     assert env.run("undo") == "Removed this week's classes from your calendar."
     assert env.calendar.live == 0 and {p.status for p in env.week()} == {"proposed"}

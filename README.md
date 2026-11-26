@@ -4,7 +4,7 @@
 
 Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once and saves the result; after that, plain code does the weekly work.
 
-> This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync.
+> This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync. One difference: this copy has the old weekly Jev ranking call removed, because Jev only needs to label each class once. The live repo may still carry that older code.
 
 ## What it looks like
 
@@ -58,6 +58,7 @@ flowchart TD
     R -->|skip| SK["Class removed from the week"] --> CAL
     R -->|fav| FV["Class saved as a favourite, picks lean towards it"] --> CAL
     R -->|"how I feel: 'low energy today', 'something longer', 'no physio'"| F["Agent turns it into a setting and re-picks the class to suit"] --> B
+    R -->|no| NO["Nothing is added; ok later still works"]
     R -->|"no reply by 23:00, and the preview was delivered"| M["Sunday 23:00: classes added automatically, with an undo option"]
     M --> CAL
     CAL --> K["Through the day: clash checker moves a class if a new event lands on it"]
@@ -70,10 +71,10 @@ flowchart TD
 | --- | --- |
 | Sunday 20:00 | Picks are made and sent as a preview |
 | Sunday 21:00 | A check tells me if the picks never ran |
-| Sunday 23:00 | No reply counts as approval: the classes go into the calendar, but only if the preview was delivered |
+| Sunday 23:00 | No reply counts as approval: the classes go into the calendar, but only if the preview was delivered and I have not said no or changed the week |
 | Every 30 minutes, 07:00 to 21:30 | Clash check: a booked class moves if a new event lands on it |
 
-Classes are only placed between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15 minutes. If nothing fits, the class is left out and the message says so. The days and goals are my settings, and the run times live in the scheduler, not in this code.
+Classes are only placed between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15 minutes, and never on another day. If nothing fits, the class is left out and the message says so. The days and goals are my settings, and the run times live in the scheduler, not in this code.
 
 ## Code map
 

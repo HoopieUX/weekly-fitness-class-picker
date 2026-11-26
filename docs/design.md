@@ -55,7 +55,7 @@ Everything else is plain rules, not Jev.
    instructor twice when instructors are known. If nothing fits, the rules relax in steps rather than failing.
 4. **Rank** the shortlist against the slot goal, using the probabilities Jev saved when it labelled each class. Liked and favourite classes get a nudge; "too hard" and
    "too easy" feedback moves the preferred strength level.
-5. **Check the calendar.** Classes only go between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15-minute slot that day, else the next free weekday. If nothing fits, the class is left out and the message says so.
+5. **Check the calendar.** Classes only go between 09:00 and 12:00, starting at 10:00 if free, otherwise at the nearest free 15-minute slot that day. A class never moves to another day on its own. If nothing fits, the class is left out and the message says so.
 6. **Write the picks** as proposed. They become real calendar events on "ok", or automatically at 23:00 on Sunday if there is no reply.
 
 ## The weekly rhythm
@@ -63,7 +63,7 @@ Everything else is plain rules, not Jev.
 - Sunday 20:00: picks are made and a message goes out.
 - Sunday 21:00: a check tells me if the picks never ran.
 - Reply "ok" to add them, change them in plain words, or say nothing.
-- Sunday 23:00: with no reply, the picks are added anyway, and the message says how to undo. Anything I changed before then is what gets added. This only happens if the preview was delivered (the agent confirms with `delivered`); if not, nothing is added and I am told why.
+- Sunday 23:00: with no reply, the picks are added anyway, and the message says how to undo. Anything I changed before then is what gets added. This only happens if the preview was delivered (the agent confirms with `preview-sent`) and I have not said `no` or changed the week since; otherwise nothing is added and I am told why.
 - Through the day: the clash checker keeps booked classes clear of new events.
 - After a class: "like", "too hard" and so on feed the next week.
 
