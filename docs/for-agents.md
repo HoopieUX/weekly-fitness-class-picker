@@ -1,6 +1,6 @@
 # For agents
 
-If you are an agent (Instinct, Muse, Claude Code) reading this repo to run the picker, start here.
+If you are an agent (Instinct, Muse, Claude Code, Codex, Grok or something else) reading this repo to run the picker, start here.
 
 ## Ground rules
 
