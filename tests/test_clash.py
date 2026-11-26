@@ -32,10 +32,16 @@ def test_past_classes_are_never_moved(env):
     assert env.run("clash-check") == "" and env.week()[1].start == dt(2026, 10, 13, 10, 0)
 
 
-def test_a_full_day_moves_the_class_to_another_weekday(env):
-    env.calendar.add_busy("Away day", "2026-10-13 07:00", "2026-10-13 21:00")
-    assert env.run("clash-check") == "Tue moved to 10am on Thu (clashes with Away day). Reply undo to put it back."
-    assert env.week()[1].start == dt(2026, 10, 15, 10, 0)
+def test_a_full_morning_never_moves_the_class_to_another_day(env):
+    env.calendar.add_busy("Away day", "2026-10-13 09:00", "2026-10-13 12:00")
+    assert env.run("clash-check") == messages.could_not_move("Tue", "Away day")
+    assert env.week()[1].start == dt(2026, 10, 13, 10, 0)
+
+
+def test_a_moved_class_stays_between_9_and_12(env):
+    env.calendar.add_busy("Long meeting", "2026-10-13 09:00", "2026-10-13 11:30")
+    assert env.run("clash-check") == "Tue moved to 11:30am (clashes with Long meeting). Reply undo to put it back."
+    assert env.week()[1].start == dt(2026, 10, 13, 11, 30)  # a 20-minute class, so it ends 11:50
 
 
 def test_no_free_time_anywhere_says_so_and_leaves_the_class(env):

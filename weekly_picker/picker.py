@@ -3,10 +3,11 @@ from dataclasses import dataclass, replace
 from datetime import date, timedelta
 from typing import Callable, Sequence
 
+from weekly_picker.config import PLACE_PREFERRED
 from weekly_picker.jev import GOALS, MAX_CANDIDATES
 from weekly_picker.models import AloClass, Labels, Pick, Settings
 from weekly_picker.rules import reasons_excluded
-from weekly_picker.timeslots import find_next_weekday, find_same_day, slot_start
+from weekly_picker.timeslots import place_on_day, slot_start
 
 Ranker = Callable[[str, list[str], list[AloClass]], dict[str, float]]
 _DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
@@ -148,7 +149,8 @@ def plan_week(
     keep: Sequence[Pick] = (), only: Sequence[str] | None = None, exclude_ids: frozenset[str] = frozenset(),
     prefer_focus: dict[str, str] | None = None, favourites: frozenset[str] = frozenset(),
 ) -> list[Pick]:
-    """One new Pick per slot, in weekday order. `week` is the Monday. Slots with nothing usable become `no_match`.
+    """One new Pick per slot, in weekday order. `week` is the Monday. Slots with nothing usable become `no_match`;
+    slots where classes fit the rules but none fits the 09:00 to 12:00 window on that day become `no_time`.
 
     To re-pick part of a week: `keep` the picks that stay (their focus, instructor, class and time still count),
     and list the slots to plan in `only`. `exclude_ids` are never picked; `prefer_focus` maps slot -> focus to try first.
@@ -162,7 +164,6 @@ def plan_week(
     used_instructors: set[str] = set()
     used_ids: set[str] = set(exclude_ids)
     covered: set[str] = set()  # physio areas this week's picks already work
-    kept_days: set[date] = set()
     kept_slots = {k.slot for k in keep if k.class_id}
     for k in keep:
         if k.class_id:
@@ -172,16 +173,14 @@ def plan_week(
             used_ids.add(k.class_id)
             if k.class_id in labels:
                 covered |= physio_hits(labels[k.class_id])
-            kept_days.add(k.start.date())
             if kc.instructor:
                 used_instructors.add(kc.instructor)
     for slot in sorted(settings.slots, key=_DAYS.index):
         if slot in kept_slots or (only is not None and slot not in only):
             continue
-        at = settings.slots[slot]
-        preferred = slot_start(week, slot, at)
+        preferred = slot_start(week, slot, PLACE_PREFERRED)
         mods = _mods(settings, slot, preferred.date(), cycle)
-        chosen = None
+        chosen, had_candidate = None, False
         for level in (0, 1, 2):  # 0 = all rules, 1 = allow repeats, 2 = also relax focus and instructor variety
             pool = _pool(mods, classes, labels, settings, history, today, ignore_repeats=level >= 1, exclude=used_ids,
                           favourites=favourites)
@@ -193,17 +192,17 @@ def plan_week(
                 same_area = mods.goal in _BODY_GOALS and _focus(c, labels) in used_focus
                 if level < 2 and (same_area or (c.instructor and c.instructor in used_instructors)):
                     continue
-                blocked = list(busy) + placed
-                start = find_same_day(preferred, c.mins, blocked) or find_next_weekday(
-                    preferred, at, c.mins, blocked, kept_days | {p.start.date() for p in picks if p.status == "proposed"})
-                if start is None:  # no free time for this one (a long favourite, say): try the next class
+                had_candidate = True
+                start = place_on_day(preferred.date(), c.mins, list(busy) + placed)
+                if start is None:  # no free time for this one in the window (a long favourite, say): try the next
                     continue
                 chosen = (c, start)
                 break
             if chosen:
                 break
         if not chosen:
-            picks.append(Pick(week=week, slot=slot, start=preferred, class_id="", status="no_match"))
+            picks.append(Pick(week=week, slot=slot, start=preferred, class_id="",
+                              status="no_time" if had_candidate else "no_match"))
             continue
         c, start = chosen
         placed.append((start, start + timedelta(minutes=c.mins)))

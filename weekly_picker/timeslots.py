@@ -49,13 +49,8 @@ def find_same_day(
     return min(candidates, key=lambda c: (abs(c - preferred), c), default=None)
 
 
-def find_next_weekday(after: datetime, at: time, minutes: int, busy, taken_days: set[date]) -> datetime | None:
-    """First free weekday after `after`, within the same Mon to Fri week, that is not already holding a class."""
-    day = after.date() + timedelta(days=1)
-    while day.weekday() <= 4 and day.weekday() > after.date().weekday():
-        if day not in taken_days:
-            found = find_same_day(datetime.combine(day, at, tzinfo=TZ), minutes, busy)
-            if found:
-                return found
-        day += timedelta(days=1)
-    return None
+def place_on_day(day: date, minutes: int, busy) -> datetime | None:
+    """Where a class goes on `day`: 10:00 if free, else the nearest free 15-minute start that still ends by 12:00
+    and starts no earlier than 09:00 (earlier wins a tie). None when nothing fits: the class is not placed."""
+    preferred = datetime.combine(day, PLACE_PREFERRED, tzinfo=TZ)
+    return find_same_day(preferred, minutes, busy, earliest=PLACE_EARLIEST, latest_end=PLACE_LATEST_END)

@@ -48,7 +48,7 @@ def test_moved_to_another_day_is_flagged():
 
 def test_no_match_slot_line():
     nothing = pick(week=WEEK, slot="Tue", start=dt(2026, 10, 13), class_id="", status="no_match")
-    assert "* Tue: nothing placed this week (no match, or no free time between 9:00 and 12:00), reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS)
+    assert "* Tue: no match this week, reply more Tue" in messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS)
 
 
 def test_equipment_text():
@@ -79,9 +79,15 @@ def test_moved_message_formats_times_and_flags_a_day_change():
 
 def test_could_not_move_message():
     assert messages.could_not_move("Tue", "Dentist") == \
-        "Tue clashes with Dentist and I couldn't find another time this week. Reply move Tue HH:MM to choose one."
+        "Tue clashes with Dentist and I couldn't find another time between 9:00 and 12:00 that day. Reply move Tue HH:MM to choose one."
 
 
 def test_a_class_that_was_never_added_is_not_ticked():
     last = [replace(LAST_WEEK[0], status="proposed"), LAST_WEEK[1], replace(LAST_WEEK[2], status="scheduled")]
     assert messages.sunday(last, THREE, CLASSES, LABELS).startswith("Did you do all of last week's classes? Mon - Tue ✓ Wed ✓")
+
+
+def test_no_time_slot_line():
+    nothing = pick(week=WEEK, slot="Tue", start=dt(2026, 10, 13), class_id="", status="no_time")
+    text = messages.sunday([], [THREE[0], nothing, THREE[2]], CLASSES, LABELS)
+    assert "* Tue: no free time between 9:00 and 12:00, so no class this week" in text

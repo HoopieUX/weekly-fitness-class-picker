@@ -52,14 +52,13 @@ def test_clash_moves_same_day_to_the_nearest_free_time(world):
     assert plan_week(**world.args())[0].start == dt(2026, 10, 12, 10, 0)
 
 
-def test_full_day_moves_the_class_to_another_weekday(world):
+def test_a_full_day_never_moves_the_class_to_another_day(world):
     world.busy_whole_day(2026, 10, 14)  # Wednesday
     wed = plan_week(**world.args())[2]
-    assert wed.slot == "Wed" and wed.start == dt(2026, 10, 15) and wed.status == "proposed"
+    assert wed.slot == "Wed" and wed.class_id == "" and wed.status == "no_time"
 
 
 def test_two_picks_never_double_book_the_same_time(world):
-    world.busy_whole_day(2026, 10, 13)  # Tuesday full: Tue's class moves to Wed 10:00, so Wed's must go elsewhere
     picks = plan_week(**world.args())
     assert len({p.start for p in picks}) == 3
     assert all(p.status == "proposed" for p in picks)
@@ -277,4 +276,4 @@ def test_every_class_starts_after_9_and_ends_by_12(world):
 def test_a_week_with_no_free_morning_places_nothing_and_says_no_match(world):
     busy = [(dt(2026, 10, 12 + d, 9, 0), dt(2026, 10, 12 + d, 12, 0)) for d in range(5)]
     picks = plan_week(**world.args(busy=busy))
-    assert [p.status for p in picks] == ["no_match"] * 3 and all(p.class_id == "" for p in picks)
+    assert [p.status for p in picks] == ["no_time"] * 3 and all(p.class_id == "" for p in picks)

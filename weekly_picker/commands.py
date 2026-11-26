@@ -8,13 +8,13 @@ from datetime import date, datetime, time, timedelta
 from pathlib import Path
 
 from weekly_picker import messages
-from weekly_picker.config import TZ
+from weekly_picker.config import AUTOADD_FROM, PLACE_PREFERRED, TZ
 from weekly_picker.jev import GOALS
 from weekly_picker.labeller import label_all, label_all_async
 from weekly_picker.models import AloClass, Favourite, Labels, Pick
 from weekly_picker.picker import alternatives, focus_of, label_ranker, plan_week
 from weekly_picker.store import ROOT
-from weekly_picker.timeslots import find_next_weekday, find_same_day, overlaps, slot_start
+from weekly_picker.timeslots import overlaps, place_on_day, slot_start
 
 _DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri"]
 LOCK_PATH = ROOT / ".alo.lock"  # commands queue behind this, so cron jobs and replies never interleave
@@ -185,7 +185,6 @@ def cmd_sunday(ctx: _Context, force: bool) -> str:
     planned = plan_week(week, data.classes_list, data.labels, data.settings, data.picks, busy, label_ranker(data.labels),
                         today=now.date(), cycle=data.cycle, keep=keep, only=ahead, favourites=data.favourites)
     store.save_picks([p for p in planned if p.slot not in kept])
-    store.save_offers(_PREVIEW, week, [])  # a fresh plan has not been shown yet
     if data.settings.next_week:
         store.save_settings(replace(data.settings, next_week={}))
     return _render_week(data, week, store.load_picks())
@@ -224,25 +223,45 @@ def cmd_approve(ctx: _Context) -> str:
     return "\n".join(lines)
 
 
-_PREVIEW = "preview"  # kept in the offers tab: (week, "preview") holds ["delivered"] once the Sunday preview reached me
-
-
-def cmd_delivered(ctx: _Context) -> str:
-    """The agent runs this after the preview message has actually been delivered. Silent."""
-    week = _pending_week(ctx)
-    if week is not None:
-        ctx.store.save_offers(_PREVIEW, week, ["delivered"])
+def cmd_preview_sent(ctx: _Context) -> str:
+    """The agent runs this once the Sunday preview has actually reached me. Auto-add needs it. Silent."""
+    week = _pending_week(ctx) or target_week(ctx.now, ctx.store.load_settings())
+    ctx.store.save_settings(replace(ctx.store.load_settings(), preview_sent=week.isoformat()))
     return ""
 
 
+# Replies that change the week (or say no) after the preview was delivered: auto-add must then leave it alone.
+_CHANGES = {"no", "pick", "choose", "skip", "goal", "next-week", "move", "repeat", "request-style",
+            "low-energy-today", "period-started", "add-day", "set-slot", "remove-slot", "undo"}
+
+
+def _note_reply(ctx: _Context) -> None:
+    week = _pending_week(ctx)
+    settings = ctx.store.load_settings()
+    if week and settings.preview_sent == week.isoformat() and settings.preview_replied != week.isoformat():
+        ctx.store.save_settings(replace(settings, preview_replied=week.isoformat()))
+
+
+def cmd_no(ctx: _Context) -> str:
+    if _pending_week(ctx) is None:
+        return "There's nothing waiting to be added."
+    return messages.declined()
+
+
 def cmd_autoadd(ctx: _Context) -> str:
-    """Add whatever is still only proposed. Runs at 11pm on Sunday, when "this week" is the one that is ending,
-    so it uses the same week as `approve`: the earliest week with proposed picks and a weekday left."""
+    """After the Sunday preview is delivered, no reply by 23:00 on Sunday counts as ok. Never when the preview was not
+    delivered, and never when I said "no" or changed the week. It uses the same week as `approve`: the earliest
+    week with proposed picks and a weekday still to come (on Sunday evening, next week)."""
+    if ctx.now.weekday() == 6 and ctx.now.time() < AUTOADD_FROM:
+        return ""  # too early on Sunday: I may still reply
     week = _pending_week(ctx)
     if week is None:
-        return ""
-    if not ctx.store.load_offers(_PREVIEW, week):  # no reply is only approval if the preview was seen
-        return messages.not_previewed()
+        return ""  # nothing waiting (already approved, or nothing picked)
+    settings = ctx.store.load_settings()
+    if settings.preview_sent != week.isoformat():
+        return messages.not_delivered()
+    if settings.preview_replied == week.isoformat():
+        return messages.replied_so_not_added()
     _, failures = _approve_week(ctx, week)
     return "\n".join([messages.autoadded(), *failures])
 
@@ -281,8 +300,7 @@ def cmd_clash_check(ctx: _Context) -> str:
             continue
         others = [w for eid, w in windows.items() if eid != p.event_id]
         blocked = busy + others
-        new = find_same_day(p.start, c.mins, blocked) or find_next_weekday(
-            p.start, data.settings.slots[p.slot], c.mins, blocked, {w[0].date() for w in others})
+        new = place_on_day(p.start.date(), c.mins, blocked)
         if new is None:
             lines.append(messages.could_not_move(p.slot, clash.title))
             continue
@@ -314,11 +332,11 @@ def cmd_label(ctx: _Context, limit: int | None) -> str:
     return f"Labelled {n} classes ({len(store.load_labels())} of {len(classes)} now labelled)."
 
 
-def cmd_import_physio(ctx: _Context, path: str | None) -> str:
+def cmd_import_physio(ctx: _Context, path: str) -> str:
     """Add physio answers that were asked of Jev elsewhere (one JSON line per class) to the saved labels.
     Every other answer in a label stays as it was. Classes with no label yet are skipped: `label` asks them
     everything, physio included."""
-    file = Path(path) if path else ROOT / "data" / "physio_labels.jsonl"
+    file = Path(path)
     if not file.exists():
         return f"I couldn't find {file}."
     answers = {}
@@ -519,19 +537,18 @@ def _put(ctx: _Context, data: _Data, week: date, slot: str, c: AloClass, *, requ
     """Put class `c` in `slot`, keeping that slot's time when it has a pick, and updating the calendar."""
     old = next((p for p in data.picks if p.week == week and p.slot == slot), None)
     old_class = data.classes.get(old.class_id) if old and old.class_id else None
-    if old and old.class_id and (old_class is None or c.mins <= old_class.mins):
-        start = old.start
-    elif old and old.class_id:  # a longer class (a long favourite, say) must not run into the next event
+    if old and old.class_id and old_class is not None and c.mins <= old_class.mins:
+        start = old.start  # same time or shorter: it still fits where the old class was
+    else:  # 09:00 to 12:00, as near 10:00 as the calendar allows, never over another event
         start_of_week, end = _week_window(week)
-        busy = _busy(ctx, data.settings, start_of_week, end, frozenset({old.event_id} - {""}))
-        start = find_same_day(old.start, c.mins, busy)
-    else:
-        start_of_week, end = _week_window(week)
-        busy = _busy(ctx, data.settings, start_of_week, end)
-        preferred = slot_start(week, slot, data.settings.slots[slot])
-        start = find_same_day(preferred, c.mins, busy)
-    if start is None:  # nothing fits between 9:00 and 12:00: leave the slot as it was, and say so
-        return messages.no_room(slot, c.title)
+        ours = frozenset({old.event_id} - {""}) if old else frozenset()
+        others = [(p.start, p.start + timedelta(minutes=data.classes[p.class_id].mins)) for p in data.picks
+                  if p.week == week and p.slot != slot and p.class_id and p.class_id in data.classes
+                  and p.status in ("proposed", "scheduled")]
+        busy = _busy(ctx, data.settings, start_of_week, end, ours) + others
+        start = place_on_day(slot_start(week, slot, PLACE_PREFERRED).date(), c.mins, busy)
+        if start is None:
+            return messages.could_not_place(slot, c.title.strip())
     new = Pick(week=week, slot=slot, start=start, class_id=c.id, requested=requested)
     new, failure = _place(ctx, data, old, new)
     return "\n".join([messages.updated([new], data.classes, data.labels), *([failure] if failure else [])])
@@ -835,14 +852,14 @@ class _Parser(argparse.ArgumentParser):
 def _parser() -> argparse.ArgumentParser:
     parser = _Parser(prog="weekly_picker")
     sub = parser.add_subparsers(dest="command", required=True)
-    for name in ("sunday", "pick", "approve", "autoadd", "delivered", "check-ran", "undo", "low-energy-today", "clash-check", "show"):
+    for name in ("sunday", "pick", "approve", "autoadd", "preview-sent", "no", "check-ran", "undo", "low-energy-today", "clash-check", "show"):
         sub.add_parser(name)
     fav = sub.add_parser("fav")
     fav.add_argument("what", nargs="+")
     fav.add_argument("--note", nargs="+", default=[])
     sub.add_parser("unfav").add_argument("what", nargs="+")
     sub.add_parser("favs")
-    sub.add_parser("import-physio").add_argument("file", nargs="?")
+    sub.add_parser("import-physio").add_argument("file")
     label = sub.add_parser("label")
     label.add_argument("--limit", type=int, default=None)
     for name in ("more", "skip", "skipped"):
@@ -894,12 +911,15 @@ def main(argv: list[str], *, store=None, calendar=None, label_client=None,
             setattr(args, attr, _day(getattr(args, attr)))
     with open(LOCK_PATH, "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)  # wait for any other command to finish; released when the file closes
+        if c in _CHANGES:
+            _note_reply(ctx)  # before the change, while the picks are still waiting for approval
         return _dispatch(ctx, c, args)
 
 
 def _dispatch(ctx: _Context, c: str, args) -> str:
     simple = {"sunday": lambda: cmd_sunday(ctx, False), "pick": lambda: cmd_sunday(ctx, True),
-              "approve": lambda: cmd_approve(ctx), "autoadd": lambda: cmd_autoadd(ctx), "delivered": lambda: cmd_delivered(ctx),
+              "approve": lambda: cmd_approve(ctx), "autoadd": lambda: cmd_autoadd(ctx), "preview-sent": lambda: cmd_preview_sent(ctx),
+              "no": lambda: cmd_no(ctx),
               "check-ran": lambda: cmd_check_ran(ctx), "undo": lambda: cmd_undo(ctx),
               "low-energy-today": lambda: cmd_low_energy_today(ctx), "clash-check": lambda: cmd_clash_check(ctx),
               "show": lambda: cmd_show(ctx), "favs": lambda: cmd_favs(ctx)}

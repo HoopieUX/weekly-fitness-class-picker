@@ -172,6 +172,8 @@ def _settings_to_rows(s: Settings) -> list[list[str]]:
         "next_week": s.next_week,
         "extra_days": s.extra_days,
         "ignore_titles": s.ignore_titles,
+        "preview_sent": s.preview_sent,
+        "preview_replied": s.preview_replied,
     }
     return [["key", "value"]] + [[k, json.dumps(v)] for k, v in values.items()]
 
@@ -181,7 +183,7 @@ def _rows_to_settings(rows: list[list[str]]) -> Settings:
     s = Settings.default()
     if "slots" in stored:
         s = replace(s, slots={k: time.fromisoformat(v) for k, v in stored["slots"].items()})
-    for key in ("slot_goals", "next_week", "extra_days", "ignore_titles"):
+    for key in ("slot_goals", "next_week", "extra_days", "ignore_titles", "preview_sent", "preview_replied"):
         if key in stored:
             s = replace(s, **{key: stored[key]})
     for key in ("min_mins", "max_mins", "low_energy_days", "preferred_strength"):

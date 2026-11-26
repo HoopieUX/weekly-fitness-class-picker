@@ -1,6 +1,6 @@
 from datetime import date, time, timedelta
 
-from weekly_picker.timeslots import find_next_weekday, find_same_day, overlaps, slot_start
+from weekly_picker.timeslots import find_same_day, overlaps, place_on_day, slot_start
 from tests.helpers import dt as london
 
 
@@ -49,22 +49,6 @@ def test_same_day_never_runs_past_the_latest_end():
     assert got is not None and got + timedelta(minutes=30) <= london(2026, 10, 13, 12, 0)
 
 
-def test_next_weekday_skips_taken_days():
-    after = london(2026, 10, 14, 9, 30)  # Wed
-    got = find_next_weekday(after, time(9, 30), 20, [], taken_days={date(2026, 10, 15)})
-    assert got == london(2026, 10, 16, 9, 30)  # Fri
-
-
-def test_next_weekday_stays_inside_the_week():
-    assert find_next_weekday(london(2026, 10, 16, 9, 30), time(9, 30), 20, [], set()) is None
-
-
-def test_next_weekday_skips_a_fully_busy_day():
-    busy = [(london(2026, 10, 15, 7, 0), london(2026, 10, 15, 21, 0))]
-    got = find_next_weekday(london(2026, 10, 14, 9, 30), time(9, 30), 20, busy, set())
-    assert got == london(2026, 10, 16, 9, 30)
-
-
 def test_busy_events_with_extra_fields_still_work():
     class Event(tuple):
         pass
@@ -100,3 +84,12 @@ def test_a_30_minute_class_cannot_start_after_11_30():
     assert find_same_day(london(2026, 10, 13, 10, 0), 30, busy) == london(2026, 10, 13, 11, 15)
     busy = [(london(2026, 10, 13, 9, 0), london(2026, 10, 13, 11, 45))]
     assert find_same_day(london(2026, 10, 13, 10, 0), 30, busy) is None
+
+
+def test_place_on_day_prefers_10_and_stays_between_9_and_12():
+    day = date(2026, 10, 13)
+    assert place_on_day(day, 20, []) == london(2026, 10, 13, 10, 0)
+    # starts are on quarter-hours, so a 20-minute class starts 11:30 at the latest (11:45 would end at 12:05)
+    assert place_on_day(day, 20, [(london(2026, 10, 13, 9, 0), london(2026, 10, 13, 11, 30))]) == london(2026, 10, 13, 11, 30)
+    assert place_on_day(day, 20, [(london(2026, 10, 13, 9, 0), london(2026, 10, 13, 11, 31))]) is None
+    assert place_on_day(day, 200, []) is None  # longer than the whole window
