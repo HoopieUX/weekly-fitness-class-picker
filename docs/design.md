@@ -60,8 +60,8 @@ Everything else is plain rules, not Jev.
 
 ## The weekly rhythm
 
-- Sunday 18:00: picks are made and a message goes out.
-- Sunday 19:00: a check tells me if the picks never ran.
+- Sunday 20:00: picks are made and a message goes out.
+- Sunday 21:00: a check tells me if the picks never ran.
 - Reply "ok" to add them, change them in plain words, or say nothing.
 - Sunday 23:00: with no reply, the picks are added anyway, and the message says how to undo. Anything I changed before then is what gets added. This only happens if the preview was delivered (the agent confirms with `delivered`); if not, nothing is added and I am told why.
 - Through the day: the clash checker keeps booked classes clear of new events.

@@ -18,9 +18,9 @@ If you are an agent (Instinct, Muse, Claude Code) reading this repo to run the p
 
 | When | Run | What it does |
 | --- | --- | --- |
-| Sunday 18:00 | `sunday` | Picks a class for each slot (Monday to Thursday) and prints the preview. Send it, then run `delivered` |
+| Sunday 20:00 | `sunday` | Picks a class for each slot (Monday to Thursday) and prints the preview. Send it, then run `delivered` |
 | Right after the preview is sent | `delivered` | Records that the preview reached the user. Silent. Run it only once delivery is confirmed |
-| Sunday 19:00 | `check-ran` | Says so if the 18:00 job never produced picks; silent otherwise |
+| Sunday 21:00 | `check-ran` | Says so if the 20:00 job never produced picks; silent otherwise |
 | Sunday 23:00 | `autoadd` | No reply counts as approval: adds anything still only proposed, but only if `delivered` was run. If it was not, it adds nothing and says so. Silent if nothing is waiting |
 | Every 30 minutes, 07:00 to 21:30 | `clash-check` | Moves a booked class if a new event lands on it; silent when nothing clashes |
 

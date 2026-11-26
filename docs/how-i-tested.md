@@ -13,7 +13,7 @@ A few tests need my private class catalogue, so they skip themselves on a fresh 
 | 3 | The clash checker runs twice, or nothing clashes | A second run moves nothing; no clash means silence. Past classes are never moved | `test_clash.py` |
 | 4 | There is no free time anywhere | It says so and leaves the class where it is | `test_clash.py` |
 | 5 | You reply "ok" twice, or after the 23:00 Sunday auto-add | Calendar events are created once; the second "ok" is harmless | `test_commands.py` |
-| 5b | Auto-add at 23:00 on Sunday | Adds the week that is about to start (not the one ending), including a fourth day, and includes a change made at 22:55. If I already replied, it stays quiet. If the picks never ran, it stays quiet and the 19:00 check is the alarm | `test_commands.py` |
+| 5b | Auto-add at 23:00 on Sunday | Adds the week that is about to start (not the one ending), including a fourth day, and includes a change made at 22:55. If I already replied, it stays quiet. If the picks never ran, it stays quiet and the 21:00 check is the alarm | `test_commands.py` |
 | 5c | The preview never reached me | No auto-add at 23:00; the message says why, and a manual "ok" still works. A fresh plan has to be delivered again before auto-add can use it | `test_commands.py` |
 | 5d | Nothing fits between 09:00 and 12:00 | Classes never start before 09:00 or end after 12:00; 10:00 is preferred, then the nearest free 15 minutes; a class that cannot fit is left out and reported, and a swap never forces one in | `test_timeslots.py`, `test_picker.py`, `test_commands.py` |
 | 6 | The Sunday job runs twice | Proposed picks are replaced, scheduled ones are kept, and one-off requests are not lost | `test_commands.py` |

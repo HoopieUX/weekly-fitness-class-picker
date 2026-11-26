@@ -6,7 +6,23 @@ Every Sunday it picks an on-demand fitness class for each of my days (Monday to 
 
 > This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync.
 
-<!-- IMAGE: GIF of WhatsApp message to approval to calendar, or remove and use the stills below -->
+## What it looks like
+
+Three screenshots from a real week, in the order it happens.
+
+![The Sunday preview on WhatsApp](docs/images/1-sunday-preview.png)
+
+**1. The Sunday preview.** Every Sunday, Instinct sends my week's picks on WhatsApp: the class, how long it is and what kit I need, all at 10:00. I reply "ok" and they go into my calendar. If I say nothing, they are added automatically at 23:00, as long as the preview was delivered.
+
+![The week in Google Calendar](docs/images/2-calendar-week.png)
+
+**2. The week in Google Calendar.** The classes are the green blocks. They always sit between 9:00 and 12:00, and they never overlap the grey "Busy" blocks (my other events). That is the clash rule at work: the picker fits classes around what is already in my diary. This is the week as first added, before the move below.
+
+![Moving a class in plain words](docs/images/3-move-a-class.png)
+
+**3. Changing it by just asking.** I ask to move Tuesday's class to Friday. The agent turns that into a picker command, the picker finds the 10:00 slot and updates the calendar event, and Instinct confirms.
+
+The wording and the link previews on WhatsApp come from the agent and WhatsApp. The picks, the times and the calendar changes come from the picker. The diagrams below show how the pieces fit.
 
 ## Why I built it
 
@@ -52,8 +68,8 @@ flowchart TD
 
 | When | What happens |
 | --- | --- |
-| Sunday 18:00 | Picks are made and sent as a preview |
-| Sunday 19:00 | A check tells me if the picks never ran |
+| Sunday 20:00 | Picks are made and sent as a preview |
+| Sunday 21:00 | A check tells me if the picks never ran |
 | Sunday 23:00 | No reply counts as approval: the classes go into the calendar, but only if the preview was delivered |
 | Every 30 minutes, 07:00 to 21:30 | Clash check: a booked class moves if a new event lands on it |
 
@@ -80,13 +96,6 @@ Classes are only placed between 09:00 and 12:00, starting at 10:00 if free, othe
 | `scripts/demo.py` | Plans one week from the sample and prints the picks |
 | `scripts/pick_classes.py` | Chooses the sample classes and exports a numbered extract with no IDs, links or instructors |
 | `scripts/make_sample.py` | Builds the sample: swaps real IDs for demo IDs, drops links and instructors |
-
-## How I use it
-
-<!-- IMAGE: still 1, the Sunday message with the week's picks and reasons -->
-<!-- IMAGE: still 2, a conversation (a swap, or "ok") -->
-<!-- IMAGE: still 3, the approval -->
-<!-- IMAGE: still 4, the calendar week -->
 
 ## Running it with an agent
 
@@ -120,6 +129,6 @@ The tests run on every push (see the badge); a few need my private catalogue and
 
 ## What's next
 
-- Images and a short walkthrough of a real week.
+- A short video walkthrough of a real week.
 - A command to relabel only the classes affected when I change a parameter.
 - Moving storage from Google Sheets to a database, which only means rewriting `store.py`.
