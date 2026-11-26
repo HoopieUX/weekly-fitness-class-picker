@@ -4,7 +4,7 @@
 
 Every Sunday it picks an on-demand fitness class for each of my days (Monday to Thursday, preferably starting at 10:00), explains why, and puts them in Google Calendar. Jev (an AI) judges each class once and saves the result; after that, plain code does the weekly work.
 
-> This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync. One small difference: this copy has the old weekly Jev ranking code removed, because the live picker now ranks from Jev's saved labels too.
+> This is a snapshot of a private working repo, shared so you can read the real code and tests. It is not kept in sync. One difference: this copy has the old weekly Jev ranking call removed, because Jev only needs to label each class once. The live repo may still carry that older code.
 
 ## What it looks like
 
